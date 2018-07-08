@@ -1,4 +1,4 @@
-baseURL = "https://isteves.github.io/"
+baseURL = "https://isteves.netlify.com/"
 languageCode = "en"
 title = "Irene Steves"
 theme = "hugo-nuo"
