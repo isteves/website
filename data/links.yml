@@ -3,3 +3,11 @@
   link: https://isteves.github.io/r-pkg-intro/Presentation.html#/
   avatar: https://assets-cdn.github.com/images/icons/emoji/unicode/1f4e6.png
   description: UC Santa Barbara Eco-Data-Science, May 2018
+
+02_arctic-data:
+  title: arcticdata::open_science()
+  link: https://speakerdeck.com/isteves/arcticdata-open-science
+  avatar: /arcticdatacenter.png
+  description: Santa Barbara R-Meetup, April 2018; SB R-Ladies, May 2018
+  
+  
