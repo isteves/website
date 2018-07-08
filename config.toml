@@ -37,7 +37,7 @@ copyright = "© This post is licensed under a Creative Commons Attribution-NonCo
 # Add your own params here
 [params]
   author = "Irene Steves"
-  avatar = "/img/avatar-irene.jpg"
+  avatar = "/img/avatar.jpg"
   seotitle = "Irene Steves"
   # subtitle = ""
   # description = ""
