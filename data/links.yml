@@ -1,13 +1,18 @@
-01_r-pkg-intro:
+97_digital-biodiversity:
+  title: Open source tools and workflows for repository management
+  link: https://www.idigbio.org/wiki/images/e/e8/ArcticDataCenter_2018.pdf
+  avatar: /digdatabiodiversity.jpg
+  description: Poster, Digital Data in Biodiversity Research, Berkeley CA, June 2018
+
+98_r-pkg-intro:
   title: How to Create an R Package
   link: https://isteves.github.io/r-pkg-intro/Presentation.html#/
   avatar: https://assets-cdn.github.com/images/icons/emoji/unicode/1f4e6.png
   description: UC Santa Barbara Eco-Data-Science, May 2018
 
-02_arctic-data:
+99_arctic-data:
   title: arcticdata::open_science()
   link: https://speakerdeck.com/isteves/arcticdata-open-science
   avatar: /arcticdatacenter.png
   description: Santa Barbara R-Meetup, April 2018; SB R-Ladies, May 2018
-  
   
