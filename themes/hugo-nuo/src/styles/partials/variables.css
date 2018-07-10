@@ -50,7 +50,7 @@
   --light: var(--white-ter);
   --dark: var(--grey-darker);
   --background: var(--white-ter);
-  --code-background: rgb(246, 248, 250);
+  --code-background: rgb(225, 232, 238);
   --main-background: var(--white);
 
   /* Text colors */

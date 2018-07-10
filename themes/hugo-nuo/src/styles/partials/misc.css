@@ -19,7 +19,7 @@
     border: 1px solid var(--media-border);
     box-shadow: 0 1px 4px var(--box-shadow-darker);
     text-align: center;
-    opacity: 1;
+    opacity: 0;
     cursor: pointer;
 
     & + a {
