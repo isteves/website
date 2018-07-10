@@ -180,10 +180,6 @@
     word-break: normal;
     background-color: rgb(225, 232, 238);
 
-    & code {
-      font-size: 0.9rem;
-      background-color: rgb(225, 232, 238);
-
       &::before,
       &::after {
         content: none;
