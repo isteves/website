@@ -138,7 +138,7 @@
     padding-bottom: 0.2em;
     margin: 0;
     font-size: 0.9em;
-    background-color: var(--code-background);
+    background-color: rgb(225, 232, 238);
     font-family: var(--family-monospace);
 
     &::before,
@@ -150,7 +150,7 @@
     &.has-jax {
       padding: 0;
       font-size: 1em;
-      background-color: transparent;
+      background-color: rgb(225, 232, 238);
     }
   }
 
@@ -178,10 +178,11 @@
     white-space: pre;
     word-wrap: normal;
     word-break: normal;
+    background-color: rgb(225, 232, 238);
 
     & code {
       font-size: 0.9rem;
-      background-color: transparent;
+      background-color: rgb(225, 232, 238);
 
       &::before,
       &::after {
@@ -189,6 +190,7 @@
       }
     }
   }
+
 
   & sup,
   & sub {
