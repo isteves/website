@@ -47,6 +47,11 @@ copyright = "© This post is licensed under a Creative Commons Attribution-NonCo
   # email = "name@domain.com"
   github = "isteves"
   twitter = "i_steves"
+  
+  highlightjsVersion = "9.11.0"
+  highlightjsCDN = "//cdn.bootcss.com"
+  highlightjsLang = ["r", "yaml", "python"]
+  highlightjsTheme = "atelier-cave-light"
 
   # Google Webmaster
   # https://www.google.com/webmasters/
