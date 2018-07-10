@@ -7,3 +7,7 @@ categories: []
 tags: []
 ---
 
+```{r}
+print("hello")
+paste("hello", "there", sep = " ")
+```
