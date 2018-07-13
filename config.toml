@@ -5,6 +5,7 @@ theme = "hugo-nuo"
 enableRobotsTXT = true
 PygmentsCodeFences = true
 canonifyurls = true
+enableEmoji = true
 
 # Disqus Username
 # disqusShortname = "disqus_shortname"
