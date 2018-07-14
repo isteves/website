@@ -13,12 +13,12 @@ library(blogdown)
 library(kableExtra)
 
 knitr::opts_chunk$set(message = FALSE, warning = FALSE, error = FALSE,
-                      fig.align = "center")
+                      fig.align = "center", cache = TRUE)
 ```
 
 This week, I came across two news articles about a [study in Nature](https://www.nature.com/articles/s41586-018-0202-3) that linked invasive rats on islands to coral reefs. I was intrigued by how the different authors (in this case, [Ed Yong](https://twitter.com/edyong209) from the Atlantic and [Victoria Gill](https://twitter.com/Vic_Gill) from the BBC) reported on the study, and took it as a sign that I have some fun with [text analysis](https://www.tidytextmining.com/).
 
-Here's the tl;dr of it-- :rat:  :palm_tree:  :arrow_right:   :bird:  :poop:  :arrow_right:   :tropical_fish: 
+Here's the tl;dr of the study-- :rat:  :palm_tree:  :arrow_right:   :bird:  :poop:  :arrow_right:   :tropical_fish: 
 
 ```{r echo = FALSE}
 blogdown::shortcode('tweet', '1017092274482831360')
