@@ -135,7 +135,7 @@ all_words %>%
     facet_wrap(~ source, scales = "free_x")
 ```
 
-As expected, "island," "rat," and "reef" are commonly used in the three articles with "coral" and "seabird" following closely behind. 
+As expected, "island," "rat," and "reef" are commonly used in the three articles with "coral" and "seabird" following closely behind.  
 
 The original article stresses biomass, whereas the news articles focus on the scientists themselves ("Prof Graham", in the case of the BBC). Interestingly, the BBC article makes _no_ mention of nitrogen and instead uses a variety of more colloquial words, such as "nutrients," "fertilizer," and "droppings."
 
