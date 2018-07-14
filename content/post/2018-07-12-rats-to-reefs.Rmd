@@ -18,8 +18,6 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, error = FALSE,
 
 This week, I came across two news articles about a [study in Nature](https://www.nature.com/articles/s41586-018-0202-3) that linked invasive rats on islands to coral reefs. I was intrigued by how the different authors (in this case, [Ed Yong](https://twitter.com/edyong209) from the Atlantic and [Victoria Gill](https://twitter.com/Vic_Gill) from the BBC) reported on the study, and took it as a sign that I have some fun with [text analysis](https://www.tidytextmining.com/).
 
-Here's the tl;dr of the study-- :rat:  :palm_tree:  :arrow_right:   :bird:  :poop:  :arrow_right:   :tropical_fish: 
-
 ```{r echo = FALSE}
 blogdown::shortcode('tweet', '1017092274482831360')
 blogdown::shortcode('tweet', '1017211861387894791')
@@ -27,7 +25,7 @@ blogdown::shortcode('tweet', '1017211861387894791')
 
 Thus began my journey down the rat-bird-coral hole...
 
-## :sparkles: Tidy
+## Tidy
 
 To avoid crazy parsing gymnastics, I copied & pasted the text of the articles into *.txt files, which I've now uploaded onto GitHub. They still needed some cleaning, but it was a start.
 
@@ -102,7 +100,7 @@ all_words <- map2(list(atlantic, bbc, nature),
 # makes blogpost look like a 30 min read
 ```
 
-## :bar_chart: Visualize 
+## Visualize 
 
 Now for some #dataviz. I love looking at word clouds, so let's take a look at a couple here. The word size in these visualizations represents the relative abundance (count) in the text. Since the original Nature article is much longer than the two news articles, let's look at it separately. 
 
@@ -149,7 +147,7 @@ all_words %>%
 
 ```
 
-## :thinking: Conclusion
+## Conclusion
 
 As I reread the two news articles again, I find that the difference in word use are highlighted in the authors' disparate strategies in telling the story. 
 
