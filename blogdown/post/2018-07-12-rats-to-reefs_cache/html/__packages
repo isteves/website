@@ -14,5 +14,5 @@ forcats
 tidytext
 RColorBrewer
 wordcloud
-bindrcpp
 pluralize
+bindrcpp
