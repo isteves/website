@@ -1,15 +1,3 @@
----
-draft: yes
-title: Rats to reefs
-author: Irene Steves
-date: '2018-07-14'
-slug: rats-to-reefs
-categories: []
-tags: []
-output:
-  blogdown::html_page
----
-
 
 
 <p>This week, I came across two news articles about a <a href="https://www.nature.com/articles/s41586-018-0202-3">study in Nature</a> that linked invasive rats on islands to coral reefs. I was intrigued by how the different authors (in this case, <a href="https://twitter.com/edyong209">Ed Yong</a> from the Atlantic and <a href="https://twitter.com/Vic_Gill">Victoria Gill</a> from the BBC) reported on the study, and took it as a sign that I have some fun with <a href="https://www.tidytextmining.com/">text analysis</a>.</p>
@@ -98,14 +86,14 @@ nature &lt;- readLines(&quot;https://raw.githubusercontent.com/isteves/website/m
 <pre class="r"><code>all_words %&gt;% 
     filter(source == &quot;nature&quot;) %&gt;% 
     with(wordcloud(word, n, max.words = 100))</code></pre>
-<p><img src="/post/2018-07-12-rats-to-reefs_files/figure-html/unnamed-chunk-9-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="2018-07-12-rats-to-reefs_files/figure-html/unnamed-chunk-9-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>Rat and island clearly dominate. We can also see that the “quick and dirty” <code>s</code> removal also affected some words that could have used that ending <code>s</code> (<code>specie</code> and <code>biomas</code>, for example).</p>
 <p>If we compare all three, we find that the BBC put the strongest emphasis on the impact on coral reefs.</p>
 <pre class="r"><code>all_words %&gt;% 
     reshape2::acast(word ~ source, value.var = &quot;n&quot;, fill = 0) %&gt;% 
     comparison.cloud(colors = c(&quot;#0072B2&quot;, &quot;#D55E00&quot;,  &quot;#009E73&quot;),
                      max.words = 100)</code></pre>
-<p><img src="/post/2018-07-12-rats-to-reefs_files/figure-html/unnamed-chunk-10-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="2018-07-12-rats-to-reefs_files/figure-html/unnamed-chunk-10-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>We can look at this more directly using bar graphs. Here, I take the 10 most common words from each article, and see how they compare across sources. In this case, the x-axis scale is auto-adjusted so that we can better compare the relative counts.</p>
 <pre class="r"><code>top_words &lt;- all_words %&gt;% group_by(source) %&gt;% top_n(10)
 
@@ -116,7 +104,7 @@ all_words %&gt;%
     xlab(NULL) +
     coord_flip() +
     facet_wrap(~ source, scales = &quot;free_x&quot;)</code></pre>
-<p><img src="/post/2018-07-12-rats-to-reefs_files/figure-html/unnamed-chunk-11-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="2018-07-12-rats-to-reefs_files/figure-html/unnamed-chunk-11-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>As expected, “island,” “rat,” and “reef” are commonly used in the three articles with “coral” and “seabird” following closely behind.</p>
 <p>The original article stresses biomass, whereas the news articles focus on the scientists themselves (“Prof Graham”, in the case of the BBC). Interestingly, the BBC article makes <em>no</em> mention of nitrogen and instead uses a variety of more colloquial words, such as “nutrients,” “fertilizer,” and “droppings.”</p>
 <pre class="r"><code>all_words %&gt;% 
