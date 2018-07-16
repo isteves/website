@@ -4,7 +4,6 @@ author: "Author Name"
 cover: "/img/cover.jpg"
 tags: ["tagA", "tagB"]
 date: {{ .Date }}
-draft: true
 ---
 
 Cut out summary from your post content here.
