@@ -19,7 +19,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, error = FALSE,
                       fig.align = "center", cache = TRUE)
 ```
 
-This week, I came across two news articles about a [study in Nature](https://www.nature.com/articles/s41586-018-0202-3) that linked invasive rats on islands to coral reefs. I was intrigued by how the different authors (in this case, [Ed Yong](https://twitter.com/edyong209) from the Atlantic and [Victoria Gill](https://twitter.com/Vic_Gill) from the BBC) reported on the study, and took it as a sign that I have some fun with [text analysis](https://www.tidytextmining.com/).
+This week, I came across two news articles about a [study in Nature](https://www.nature.com/articles/s41586-018-0202-3) that linked invasive rats on islands to coral reefs. I was intrigued by how the different authors (in this case, [Ed Yong](https://twitter.com/edyong209) from the Atlantic and [Victoria Gill](https://twitter.com/Vic_Gill) from the BBC) reported on the study, and took it as a sign that I have should some fun with [text analysis](https://www.tidytextmining.com/).
 
 ```{r echo = FALSE}
 blogdown::shortcode('tweet', '1017092274482831360')
@@ -42,7 +42,7 @@ bbc <- readLines("https://raw.githubusercontent.com/isteves/website/master/stati
 nature <- readLines("https://raw.githubusercontent.com/isteves/website/master/static/post/2018-07-12-rats-to-reefs_files/ratsreef-nature.txt")
 ```
 
-I decided to begin with just the Atlantic article to catch any funny business before going too deep into the text analysis. 
+I decided to begin with just the Atlantic article to catch any funny business before going too deep into the analysis. 
 
 ```{r}
 tibble(text = atlantic) %>% 
@@ -154,7 +154,7 @@ all_words %>%
 
 As I reread the two news articles again, I find that the difference in word use are highlighted in the authors' disparate strategies in telling the story. 
 
-[Victoria Gill](https://twitter.com/Vic_Gill) from the BBC is succinct and to the point. Each paragraph contains no more than two sentences, and she lays out the story in two sections: "How do rats harm coral reefs?" and "Why does this matter?"  The latter section is almost entirely about the importance of coral reefs generally, which explains heavy use of `reef` that we saw above.
+[Victoria Gill](https://twitter.com/Vic_Gill) from the BBC is succinct and to the point. Each paragraph contains no more than two sentences, and she lays out the story in two sections: "How do rats harm coral reefs?" and "Why does this matter?"  The latter section is almost entirely about the importance of coral reefs generally, which explains the heavy use of `reef` that we saw above.
 
 In contrast, [Ed Yong](https://twitter.com/edyong209) uses longer-form prose to highlight the historical and academic landscape of the study. He writes about humans inadvertently carrying rats to the islands in the late 18th and early 19th centuries, and describes the complex and abundant relationships among members of this ecosystem. Like Victoria Gill, Ed Yong ends on a conservation note: eradicating rats from islands is "low-hanging fruit" as far as management actions are concerned. 
 
