@@ -21,6 +21,7 @@ draft: false
 <pre class="r"><code>library(tidyverse)
 library(tidytext)
 library(wordcloud)
+library(pluralize) #devtools::install_github(&quot;hrbrmstr/pluralize&quot;)
 
 atlantic &lt;- readLines(&quot;https://raw.githubusercontent.com/isteves/website/master/static/post/2018-07-12-rats-to-reefs_files/ratsreef-atlantic.txt&quot;)
 bbc &lt;- readLines(&quot;https://raw.githubusercontent.com/isteves/website/master/static/post/2018-07-12-rats-to-reefs_files/ratsreef-bbc.txt&quot;)
@@ -50,18 +51,17 @@ nature &lt;- readLines(&quot;https://raw.githubusercontent.com/isteves/website/m
 <li>I’ve got words that differ only in plurality (<code>rats</code> versus <code>rat</code>)</li>
 <li>and if I scroll through the list some more, some of the “words” are actually numbers</li>
 </ul>
-<p>With a few extra lines of <a href="https://www.rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf">stringr</a>, I can fix these problems.</p>
+<p>With an extra lines of <a href="https://www.rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf">stringr</a> and the fantastic <a href="https://github.com/hrbrmstr/pluralize">pluralize</a> package, I can fix these problems.</p>
 <pre class="r"><code>tibble(text = atlantic) %&gt;% 
     mutate(text = str_replace_all(text, &quot;[^a-zA-Z]&quot;, &quot; &quot;)) %&gt;% 
     # replace anything NOT (^) in the alphabet with a space
     
     unnest_tokens(word, text) %&gt;% 
     anti_join(stop_words, by = &quot;word&quot;) %&gt;% 
-    mutate(word = str_replace(word, &quot;s$&quot;, &quot;&quot;)) %&gt;% 
-    # quick and dirty removal of any `s` at the end of a word
+    mutate(word = singularize(word)) %&gt;% #from the pluralize package
     
     count(word, sort = TRUE) </code></pre>
-<pre><code>## # A tibble: 245 x 2
+<pre><code>## # A tibble: 244 x 2
 ##    word           n
 ##    &lt;chr&gt;      &lt;int&gt;
 ##  1 island        26
@@ -74,15 +74,15 @@ nature &lt;- readLines(&quot;https://raw.githubusercontent.com/isteves/website/m
 ##  8 free           6
 ##  9 difference     5
 ## 10 found          5
-## # ... with 235 more rows</code></pre>
-<p>It’s not perfect, but it looks good enough. Now let’s <a href="https://twitter.com/hadleywickham/status/909242896691466240">functionalize it</a> and repeat it for the other two articles. While I’m at it, let me also add in a column for the source.</p>
+## # ... with 234 more rows</code></pre>
+<p>It looks pretty good! Now let’s <a href="https://twitter.com/hadleywickham/status/909242896691466240">functionalize it</a> and repeat it for the other two articles. While I’m at it, let me also add in a column for the source.</p>
 <pre class="r"><code>clean_text &lt;- function(text, source) {
     tibble(source = source,
            text = text) %&gt;% 
         mutate(text = str_replace_all(text, &quot;[^a-zA-Z]&quot;, &quot; &quot;)) %&gt;%
         unnest_tokens(word, text) %&gt;%
         anti_join(stop_words, by = &quot;word&quot;) %&gt;%
-        mutate(word = str_replace(word, &quot;s$&quot;, &quot;&quot;)) %&gt;% 
+        mutate(word = singularize(word)) %&gt;% 
         group_by(source) %&gt;% # need this to keep the source column
         count(word, sort = TRUE)
 }</code></pre>
@@ -99,7 +99,7 @@ nature &lt;- readLines(&quot;https://raw.githubusercontent.com/isteves/website/m
     filter(source == &quot;nature&quot;) %&gt;% 
     with(wordcloud(word, n, max.words = 100))</code></pre>
 <p><img src="/post/2018-07-12-rats-to-reefs_files/figure-html/unnamed-chunk-9-1.png" width="672" style="display: block; margin: auto;" /></p>
-<p>Rat and island clearly dominate. We can also see that the “quick and dirty” <code>s</code> removal also affected some words that could have used that ending <code>s</code> (<code>specie</code> and <code>biomas</code>, for example).</p>
+<p>Island, rat, and reef clearly dominate. We see that some weird-looking words appear in the cloud. Some of those appear to be units (<code>kg</code>, <code>yr</code>) and others belong to longer phrases (<code>al</code>) but don’t usually stand alone. For the purpose of the blogpost, it’s good enough. (Though don’t do this for your thesis!)</p>
 <p>If we compare all three, we find that the BBC put the strongest emphasis on the impact on coral reefs.</p>
 <pre class="r"><code>all_words %&gt;% 
     reshape2::acast(word ~ source, value.var = &quot;n&quot;, fill = 0) %&gt;% 

@@ -36,6 +36,7 @@ To avoid crazy parsing gymnastics, I copied & pasted the text of the articles in
 library(tidyverse)
 library(tidytext)
 library(wordcloud)
+library(pluralize) #devtools::install_github("hrbrmstr/pluralize")
 
 atlantic <- readLines("https://raw.githubusercontent.com/isteves/website/master/static/post/2018-07-12-rats-to-reefs_files/ratsreef-atlantic.txt")
 bbc <- readLines("https://raw.githubusercontent.com/isteves/website/master/static/post/2018-07-12-rats-to-reefs_files/ratsreef-bbc.txt")
@@ -57,7 +58,7 @@ Thanks to [tidytext](https://github.com/juliasilge/tidytext) & [tokenizers](http
 - I've got words that differ only in plurality (`rats` versus `rat`)
 - and if I scroll through the list some more, some of the "words" are actually numbers
 
-With a few extra lines of [stringr](https://www.rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf), I can fix these problems.
+With an extra lines of [stringr](https://www.rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf) and the fantastic [pluralize](https://github.com/hrbrmstr/pluralize) package, I can fix these problems.
 
 ```{r}
 tibble(text = atlantic) %>% 
@@ -66,13 +67,12 @@ tibble(text = atlantic) %>%
     
     unnest_tokens(word, text) %>% 
     anti_join(stop_words, by = "word") %>% 
-    mutate(word = str_replace(word, "s$", "")) %>% 
-    # quick and dirty removal of any `s` at the end of a word
+    mutate(word = singularize(word)) %>% #from the pluralize package
     
     count(word, sort = TRUE) 
 ```
 
-It's not perfect, but it looks good enough. Now let's [functionalize it](https://twitter.com/hadleywickham/status/909242896691466240) and repeat it for the other two articles. While I'm at it, let me also add in a column for the source.
+It looks pretty good! Now let's [functionalize it](https://twitter.com/hadleywickham/status/909242896691466240) and repeat it for the other two articles. While I'm at it, let me also add in a column for the source.
 
 ```{r}
 clean_text <- function(text, source) {
@@ -81,7 +81,7 @@ clean_text <- function(text, source) {
         mutate(text = str_replace_all(text, "[^a-zA-Z]", " ")) %>%
         unnest_tokens(word, text) %>%
         anti_join(stop_words, by = "word") %>%
-        mutate(word = str_replace(word, "s$", "")) %>% 
+        mutate(word = singularize(word)) %>% 
         group_by(source) %>% # need this to keep the source column
         count(word, sort = TRUE)
 }
@@ -113,7 +113,7 @@ all_words %>%
     with(wordcloud(word, n, max.words = 100))
 ```
 
-Rat and island clearly dominate. We can also see that the "quick and dirty" `s` removal also affected some words that could have used that ending `s` (`specie` and `biomas`, for example). 
+Island, rat, and reef clearly dominate. We see that some weird-looking words appear in the cloud.  Some of those appear to be units (`kg`, `yr`) and others belong to longer phrases (`al`) but don't usually stand alone. For the purpose of the blogpost, it's good enough. (Though don't do this for your thesis!)
 
 If we compare all three, we find that the BBC put the strongest emphasis on the impact on coral reefs. 
 
@@ -147,7 +147,6 @@ all_words %>%
     mutate(single_word = ifelse(n == 1, TRUE, FALSE)) %>% 
     group_by(source, single_word) %>% 
     summarize(count_word = n())
-
 ```
 
 ## Conclusion
