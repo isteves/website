@@ -6,6 +6,7 @@ enableRobotsTXT = true
 PygmentsCodeFences = true
 canonifyurls = true
 enableEmoji = true
+ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 # Disqus Username
 # disqusShortname = "disqus_shortname"
