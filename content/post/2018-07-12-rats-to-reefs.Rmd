@@ -19,7 +19,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, error = FALSE,
                       fig.align = "center", cache = TRUE)
 ```
 
-This week, I came across two news articles about a [study in Nature](https://www.nature.com/articles/s41586-018-0202-3) that linked invasive rats on islands to coral reefs. I was intrigued by how the different authors (in this case, [Ed Yong](https://twitter.com/edyong209) from the Atlantic and [Victoria Gill](https://twitter.com/Vic_Gill) from the BBC) reported on the study, and took it as a sign that I have should some fun with [text analysis](https://www.tidytextmining.com/).
+This week, I came across two news articles about a [study in Nature](https://www.nature.com/articles/s41586-018-0202-3) led by [Nick Graham](https://twitter.com/naj_graham) that linked invasive rats on islands to coral reefs. I was intrigued by how the different authors (in this case, [Ed Yong](https://twitter.com/edyong209) from the Atlantic and [Victoria Gill](https://twitter.com/Vic_Gill) from the BBC) reported on the study, and took it as a sign that I have should some fun with [text analysis](https://www.tidytextmining.com/).
 
 ```{r echo = FALSE}
 blogdown::shortcode('tweet', '1017092274482831360')
@@ -157,4 +157,4 @@ As I reread the two news articles again, I find that the difference in word use 
 
 In contrast, [Ed Yong](https://twitter.com/edyong209) uses longer-form prose to highlight the historical and academic landscape of the study. He writes about humans inadvertently carrying rats to the islands in the late 18th and early 19th centuries, and describes the complex and abundant relationships among members of this ecosystem. Like Victoria Gill, Ed Yong ends on a conservation note: eradicating rats from islands is "low-hanging fruit" as far as management actions are concerned. 
 
-Graham et al.'s study pulled together a lot of smaller studies into a cohesive and compelling story, but the best part of is definitely the [GitHub link](https://github.com/mamacneil/ChagosRats) to the analyses and plots!  Way to champion reproducible research!
+Graham et al.'s study pulled together a lot of smaller studies into a cohesive and compelling story, but the best part of is definitely [Aaron MacNeil's](https://twitter.com/ma_macneil) [GitHub link](https://github.com/mamacneil/ChagosRats) to the analyses and plots!  Way to champion reproducible research!
