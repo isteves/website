@@ -1,0 +1,166 @@
+---
+title: Functional programming tricks in httr
+author: Irene Steves
+date: '2018-07-08'
+slug: fun-prog-httr
+categories: []
+tags: []
+draft: true
+output:
+  blogdown::html_page:
+    toc: true
+    toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center", 
+                      message = FALSE, warning = FALSE,
+                      error = FALSE, eval = FALSE)
+library(listviewer)
+```
+
+In the past few months, I worked on several projects that involved accessing web API's in R, which meant I spent a lot of time puzzling over functions and code in the [httr package](https://github.com/r-lib/httr). I came to really enjoy referring back to the [`content()`](https://github.com/r-lib/httr/blob/1fc659856602f60ff75eb01903513244e3491ec2/R/content.r) function in particular. It seemed that I learned something new every time I revisited it.
+
+## httr basics
+
+You can use httr's `GET` function to read any URL into your R session. However, some URL's are more conducive to parsing and manipulation than others. For example, I can use `GET` to retrieve a csv file.
+
+```{r warning = FALSE, message = FALSE, eval = FALSE}
+library(httr)
+req <- GET("https://cn.dataone.org/cn/v2/resolve/urn:uuid:9e123f84-ce0d-4094-b898-c9e73680eafa")
+```
+
+The `req` object looks something like this. It includes `content`, which looks particularly scary because it's still in a raw format. 
+
+```{r echo = FALSE}
+library(httr) # load this for real
+req <- readRDS("req.rds") # to avoid GETing each time I knit
+xx <- unlist(list(req), recursive = FALSE) #change to list class
+xx$handle <- NULL #remove bc of external pointer
+jsonedit(xx)
+```
+
+Now we can bring the `content()` function into the game. Use it on `req`, and voila -- you've got your csv automatically read in as a tibble. 
+
+```{r}
+data <- content(req)
+data[, 1:10] # showing just the first 10 columns
+```
+
+```{r echo = FALSE}
+knitr::include_graphics("https://media.giphy.com/media/10UeedrT5MIfPG/giphy.gif")
+```
+
+How did `content()` understand that the gobbledygook was a csv?  In this case, it was able to see `text/csv` specified as the `content-type` (check out the `header` section in the `req` output above). Depending on what it sees there, it tries to automatically parse the file in an appropriate manner. For csv's, that means reading it in using `read_csv()`. There's a bit more to it than that, but that's for another day. 
+
+This post is dedicated to the small but neat things I learned as I was trying to figure out the logic behind the function, so on with the tricks!
+
+## Trick 1: use ` to search for operators
+
+When I came across the following piece of code, I wasn't entirely sure what the `%||%` operator did, so I tried the normal approach: [googling it](https://www.google.com/search?q=%25%7C%7C%25&oq=%25%7C%7C%25&aqs=chrome..69i57.3928j0j7&sourceid=chrome&ie=UTF-8). 
+
+```{r eval = FALSE}
+type <- type %||% x$headers[["Content-Type"]] %||%
+    mime::guess_type(x$url, empty = "application/octet-stream")
+```
+
+This time, Google totally failed me, so I tried  searching for it on the [GitHub repo](https://github.com/r-lib/httr/search?q=%25%7C%7C%25&unscoped_q=%25%7C%7C%25).  I knew it must be there, but I simply could not figure out how to search it! 
+
+Thankfully, Twitter was there for me in my time of need:
+
+```{r echo=FALSE}
+blogdown::shortcode('tweet', '997178960797687809')
+```
+
+In retrospect, the back-ticks are obvious, but I couldn't quite put my finger on the problem at the time. In fact, I still haven't figured out how to Google for it directly (so send me a message if you do!).  
+
+## Trick 2: the null-default operator
+
+Also known as the [null coalescing operator](https://en.wikipedia.org/wiki/Null_coalescing_operator) in other contexts, this operator allows you to run through a series of values and take the first one that is _not_ NULL. In the case of `1 %||% 2`, you get `1`, but for `NULL %||% 2`, you get `2`.
+
+```{r echo = FALSE}
+blogdown::shortcode('tweet', '997183697781587968')
+```
+
+I later discovered that this operator is exported not only by `rlang` but also `purrr`, and is used throughout the `tidyverse` set of packages.
+
+That inspired me to write my own version of this function, my very own *null-na-default operator*, which returns the first argument that is neither `NA` nor `NULL`. I've only found one clunky [use-case](https://github.com/NCEAS/metajam/blob/51b7e54c4ac923a98685d4854191a8d92dc2891c/R/download_d1_data.R#L140) for it so far, but I'm keeping my eyes out for other opportunities.  
+
+```{r eval = FALSE}
+`%|||%` <- function (x, y) {
+  if (is.null(x) | is.na(x)) {
+    y
+  }
+  else {
+    x
+  }
+}
+```
+
+## Trick 3: check argument inputs with `match.arg()`
+
+I am slow to develop this particular habit, but in general, it's always a good idea to check a user's arguments at the beginning of a function. That way, you break out of the function early and can avoid confusing error messages that get you chasing bugs in the wrong direction.  
+
+```{r error = TRUE}
+arg <- "howdy"
+match.arg(arg, c("howdy", "aloha", "g'day"))
+
+arg <- "howday"
+match.arg(arg, c("howdy", "aloha", "g'day"))
+```
+
+It also allows for some partial-matching, if that's what you want:
+
+```{r}
+arg <- "howd"
+match.arg(arg, c("howdy", "aloha", "g'day"))
+```
+
+## Trick 4: match inputs to expressions using `switch()`
+
+You can't always escape if-else chains, but sometimes you can use `switch()` to evaluate different expressions depending on your input. Take this example:
+
+```{r message = FALSE}
+emph <- "smile"
+
+if(emph == "regular") {
+    print("how's it going?")
+} else if (emph == "smile") {
+    print("how's it going? :)")
+} else if (emph == "exclamation") {
+    print("how's it going?!")
+}
+```
+
+versus
+
+```{r}
+switch(emph,
+       regular = print("how's it going?"),
+       smile = print("how's it going? :)"),
+       exclamation = print("how's it going?!"))
+```
+
+The changes I've made here were pretty tame, but really, anything is possible:
+
+```{r}
+switch(emph,
+       regular = paste("Which would you choose?", pi, "or pie?"),
+       smile = 1:3,
+       exclamation = factorial(10))
+```
+
+## Trick 5: store functions in lists
+
+This neat chunk of code from the `parse_auto` function is both concise and readable because it takes advantage of [functions stored as a list](https://github.com/r-lib/httr/blob/1fc659856602f60ff75eb01903513244e3491ec2/R/content-parse.r#L66). This is a form of object-oriented programming, which means that depending on the object type read in, different things happen to it. (????)
+
+```{r eval = FALSE}
+mt <- parse_media(type)
+parser <- parsers[[mt$complete]]
+if (is.null(parser)) {
+    stop("No automatic parser available for ", mt$complete, ".",
+         call. = FALSE)
+}
+```
+
+
