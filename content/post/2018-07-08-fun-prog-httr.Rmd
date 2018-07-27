@@ -1,25 +1,26 @@
 ---
-title: Functional programming tricks in httr
+title: FUNctional programming tricks in httr
 author: Irene Steves
-date: '2018-07-08'
+date: '2018-07-26'
 slug: fun-prog-httr
 categories: []
 tags: []
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true
-    toc_depth: 4
+    toc_depth: 3
 ---
 
 ```{r setup, include=FALSE}
+library(listviewer)
+library(knitr)
 knitr::opts_chunk$set(echo = TRUE, fig.align = "center", 
                       message = FALSE, warning = FALSE,
-                      error = FALSE, eval = FALSE)
-library(listviewer)
+                      error = FALSE, eval = TRUE)
 ```
 
-In the past few months, I worked on several projects that involved accessing web API's in R, which meant I spent a lot of time puzzling over functions and code in the [httr package](https://github.com/r-lib/httr). I came to really enjoy referring back to the [`content()`](https://github.com/r-lib/httr/blob/1fc659856602f60ff75eb01903513244e3491ec2/R/content.r) function in particular. It seemed that I learned something new every time I revisited it.
+Over the past few months, I worked on several projects that involved accessing web API's in R, which meant I spent a lot of time puzzling over the functions and code in the [httr package](https://github.com/r-lib/httr). I came to really enjoy referring back to the [`content()`](https://github.com/r-lib/httr/blob/1fc659856602f60ff75eb01903513244e3491ec2/R/content.r) function in particular--it seemed that I learned something new every time I went back to it!
 
 ## httr basics
 
@@ -27,35 +28,43 @@ You can use httr's `GET` function to read any URL into your R session. However, 
 
 ```{r warning = FALSE, message = FALSE, eval = FALSE}
 library(httr)
-req <- GET("https://cn.dataone.org/cn/v2/resolve/urn:uuid:9e123f84-ce0d-4094-b898-c9e73680eafa")
+internet_thing <- GET("https://cn.dataone.org/cn/v2/resolve/urn:uuid:9e123f84-ce0d-4094-b898-c9e73680eafa")
 ```
 
-The `req` object looks something like this. It includes `content`, which looks particularly scary because it's still in a raw format. 
+If you take a look at the `internet_thing`, it looks something like this: 
 
 ```{r echo = FALSE}
 library(httr) # load this for real
-req <- readRDS("req.rds") # to avoid GETing each time I knit
-xx <- unlist(list(req), recursive = FALSE) #change to list class
+internet_thing <- readRDS("httr-req.RDS") # to avoid GETing each time I knit
+xx <- unlist(list(internet_thing), recursive = FALSE) #change to list class
 xx$handle <- NULL #remove bc of external pointer
 jsonedit(xx)
 ```
 
-Now we can bring the `content()` function into the game. Use it on `req`, and voila -- you've got your csv automatically read in as a tibble. 
+The `internet_thing` includes a `url`, `status_code`, and a number of other attributes. The `content` looks particularly scary because it's still in a raw format. 
+
+When we bring the `content()` function into the game, voila -- the `internet_thing` gets automatically parsed into a tibble. 
 
 ```{r}
-data <- content(req)
-data[, 1:10] # showing just the first 10 columns
+data <- content(internet_thing)
+data[, 1:5] # showing just the first 5 columns
 ```
 
 ```{r echo = FALSE}
 knitr::include_graphics("https://media.giphy.com/media/10UeedrT5MIfPG/giphy.gif")
 ```
 
-How did `content()` understand that the gobbledygook was a csv?  In this case, it was able to see `text/csv` specified as the `content-type` (check out the `header` section in the `req` output above). Depending on what it sees there, it tries to automatically parse the file in an appropriate manner. For csv's, that means reading it in using `read_csv()`. There's a bit more to it than that, but that's for another day. 
+#### How did `content()` understand that the gobbledygook was a csv?
 
-This post is dedicated to the small but neat things I learned as I was trying to figure out the logic behind the function, so on with the tricks!
+If you look back at the `internet_thing`, you can see that `text/csv` specified as the `content-type` in the `header` section. The `content()` function "sees" this specification and tries to parse it in an appropriate manner.  In this case, it means reading the content of the `internet_thing` in using `read_csv()`. (If you're _really_ curious about the specifics, more details are in [the code](https://github.com/r-lib/httr/blob/1fc659856602f60ff75eb01903513244e3491ec2/R/content-parse.r#L66)!)
 
-## Trick 1: use ` to search for operators
+_Also: for more info on API's, the httr [quickstart guide](http://httr.r-lib.org/articles/quickstart.html) and [vignettes](http://httr.r-lib.org/articles/api-packages.html) are solid places to start. The first half of the [RStudio Plumber webinar](https://rstd.io/plumber-webinar) is also a great intro!_  
+
+This post is dedicated to the small but neat things I learned as I was trying to figure out the logic behind the function, so...
+
+## On with the **tricks**!
+
+### Embrace the backtick
 
 When I came across the following piece of code, I wasn't entirely sure what the `%||%` operator did, so I tried the normal approach: [googling it](https://www.google.com/search?q=%25%7C%7C%25&oq=%25%7C%7C%25&aqs=chrome..69i57.3928j0j7&sourceid=chrome&ie=UTF-8). 
 
@@ -64,7 +73,7 @@ type <- type %||% x$headers[["Content-Type"]] %||%
     mime::guess_type(x$url, empty = "application/octet-stream")
 ```
 
-This time, Google totally failed me, so I tried  searching for it on the [GitHub repo](https://github.com/r-lib/httr/search?q=%25%7C%7C%25&unscoped_q=%25%7C%7C%25).  I knew it must be there, but I simply could not figure out how to search it! 
+This time, Google totally failed me, so I tried  searching for it on the [GitHub repo](https://github.com/r-lib/httr/search?q=%25%7C%7C%25&unscoped_q=%25%7C%7C%25). And failed. Again.  I knew it must be there, but I simply could _not_ figure out how to search it! 
 
 Thankfully, Twitter was there for me in my time of need:
 
@@ -72,11 +81,17 @@ Thankfully, Twitter was there for me in my time of need:
 blogdown::shortcode('tweet', '997178960797687809')
 ```
 
-In retrospect, the back-ticks are obvious, but I couldn't quite put my finger on the problem at the time. In fact, I still haven't figured out how to Google for it directly (so send me a message if you do!).  
+In retrospect, the backticks are obvious, but I couldn't quite put my finger on the problem at the time. In fact, I still haven't figured out how to Google for it directly (so send me a message if you do!).  
 
-## Trick 2: the null-default operator
+If you want some more **backtick action**, try this in your R console: 
 
-Also known as the [null coalescing operator](https://en.wikipedia.org/wiki/Null_coalescing_operator) in other contexts, this operator allows you to run through a series of values and take the first one that is _not_ NULL. In the case of `1 %||% 2`, you get `1`, but for `NULL %||% 2`, you get `2`.
+```{r eval = FALSE}
+?`'`
+```
+
+### The null-default operator `%||%`
+
+Also known as the [null coalescing operator](https://en.wikipedia.org/wiki/Null_coalescing_operator), this operator allows you to run through a series of values and take the first one that is _not_ NULL. 
 
 ```{r echo = FALSE}
 blogdown::shortcode('tweet', '997183697781587968')
@@ -97,9 +112,9 @@ That inspired me to write my own version of this function, my very own *null-na-
 }
 ```
 
-## Trick 3: check argument inputs with `match.arg()`
+### Check argument inputs with `match.arg()`
 
-I am slow to develop this particular habit, but in general, it's always a good idea to check a user's arguments at the beginning of a function. That way, you break out of the function early and can avoid confusing error messages that get you chasing bugs in the wrong direction.  
+I am slow to develop this particular habit, but in general, it's always a good idea to check a user's arguments at the beginning of a function. That way, you can break out of the function early and avoid confusing error messages that get you chasing bugs in the wrong direction.  
 
 ```{r error = TRUE}
 arg <- "howdy"
@@ -109,14 +124,17 @@ arg <- "howday"
 match.arg(arg, c("howdy", "aloha", "g'day"))
 ```
 
-It also allows for some partial-matching, if that's what you want:
+It also assumes you want partial-matching but throws an error if multiple options match.
 
-```{r}
-arg <- "howd"
+```{r error = TRUE}
+arg <- "how"
 match.arg(arg, c("howdy", "aloha", "g'day"))
+
+arg <- "how"
+match.arg(arg, c("howdy", "aloha", "g'day", "how are ya?"))
 ```
 
-## Trick 4: match inputs to expressions using `switch()`
+### `switch()` out your if-elses
 
 You can't always escape if-else chains, but sometimes you can use `switch()` to evaluate different expressions depending on your input. Take this example:
 
@@ -138,10 +156,10 @@ versus
 switch(emph,
        regular = print("how's it going?"),
        smile = print("how's it going? :)"),
-       exclamation = print("how's it going?!"))
+       exclamation = print("how goes?!"))
 ```
 
-The changes I've made here were pretty tame, but really, anything is possible:
+The changes I've made here were pretty tame, but really, anything is possible (though you probably don't want to surprise your users too much).
 
 ```{r}
 switch(emph,
@@ -150,17 +168,35 @@ switch(emph,
        exclamation = factorial(10))
 ```
 
-## Trick 5: store functions in lists
+As [Jenny Bryan](https://twitter.com/jennybryan) put it in her excellent [Code Smells and Feels](rstd.io/code-smells) talk at the 2018 useR conference:
 
-This neat chunk of code from the `parse_auto` function is both concise and readable because it takes advantage of [functions stored as a list](https://github.com/r-lib/httr/blob/1fc659856602f60ff75eb01903513244e3491ec2/R/content-parse.r#L66). This is a form of object-oriented programming, which means that depending on the object type read in, different things happen to it. (????)
+> `switch()` is ideal if you need to dispatch different **logic**, based on a **string**.  
+> You are allowed to write a helper function to generate that string.
+
+The tidyverse friend of the `switch` is [`case_when`](https://dplyr.tidyverse.org/reference/case_when.html). In Jenny's words: 
+
+> `dplyr::case_when()` is ideal if you need to dispatch different **data**, based on **data (+ logic)**.
+
+_Note: the talk also covers our friend the null-coalescing operator `%||%`!_
+
+### Strange bedfellows
+
+I thought I was relatively comfortable with lists until I saw _functions_ stored in a list.  Check it out for yourself in the code of the [`parse_auto()`](https://github.com/r-lib/httr/blob/1fc659856602f60ff75eb01903513244e3491ec2/R/content-parse.r#L66) helper function, which is called by `content()`.  It still blows my mind a little, but I realize now that it's a form of [object-oriented programming](http://adv-r.had.co.nz/OO-essentials.html).
+
+Depending on what type of `internet_thing` we give it, `parse_auto()` will find the function best suited to it. For example, the following snippet (which I've shortened from the original) shows that different functions--the aptly named `read_xml()` and `read_csv`--are called to depending on whether the metadata of the `internet_thing` says it's an XML file or a csv.  
 
 ```{r eval = FALSE}
-mt <- parse_media(type)
-parser <- parsers[[mt$complete]]
-if (is.null(parser)) {
-    stop("No automatic parser available for ", mt$complete, ".",
-         call. = FALSE)
+parsers$`text/xml` <- function(x, type = NULL, ...) {
+  need_package("xml2")
+  xml2::read_xml(x, encoding = encoding, ...)
+}
+
+parsers$`text/csv` <- function(x, type = NULL, ...) {
+  need_package("readr")
+  readr::read_csv(x, locale = readr::locale(encoding = encoding), ...)
 }
 ```
 
+## tl;dr - _do_ read the source code!
 
+Admittedly, not all source code is created equal, but try to at least skim through!  If you find that you can read through the code almost like it's English, then you've probably found a human-readable gem. 
