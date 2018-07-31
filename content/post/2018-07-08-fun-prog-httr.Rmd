@@ -168,7 +168,7 @@ switch(emph,
        exclamation = factorial(10))
 ```
 
-As [Jenny Bryan](https://twitter.com/jennybryan) put it in her excellent [Code Smells and Feels](rstd.io/code-smells) talk at the 2018 useR conference:
+As [Jenny Bryan](https://twitter.com/jennybryan) put it in her excellent [Code Smells and Feels](https://rstd.io/code-smells) talk at the 2018 useR conference:
 
 > `switch()` is ideal if you need to dispatch different **logic**, based on a **string**.  
 > You are allowed to write a helper function to generate that string.
