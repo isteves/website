@@ -1,0 +1,56 @@
+---
+title: Workflow reflections
+author: Irene Steves
+date: '2018-08-02'
+slug: workflow-reflections
+draft: true
+categories: []
+tags: []
+---
+
+There are a lot of things you can learn from Jenny Bryan, but one key point is that **workflows matter**.  Writing clean, beautiful code is great and _organization_ is a crucial part of that.  Jenny has already covered many best practices in her talks (LINKS), so this blogpost is more of a reflection of how I leveled up my workflow game over the years. 
+
+### In the beginning
+
+...there were long scripts that didn't necessarily run in order. I was incredibly afraid of losing chunks of code once I figured something out, so I'd comment out anything I didn't need anymore. _Just_ in case I ever needed it again.
+
+I used my scripts interactively and ran different chunks as needed. That meant that my code was _mostly_ in order. Anytime I needed to update a graph, I ran the appropriate chunks and saved the output plots the "pointy-clicky" way--using the RStudio IDE. 
+
+### And then there were better scripts
+
+Slowly but surely, my workflow improved:
+
+- I started saving plots within scripts (`ggsave` FTW)
+    - This meant I could save them to specific places each time and _link_ them to LaTeX/docx/Rmd documents (note: docx is a bit buggy with this)
+- I developed better script structure
+    - `library` calls at the very top
+    - Sections demarcated with `## A New Section ----------`
+- Functions became more of a thing
+- MOAR comments
+
+### 
+
+One day, I learned about `source()` and the notion of **self-contained scripts** finally became apparent. This was probably the day I really started to think about R beyond just lines of code.
+
+Henceforth, I started asking people about workflows, trying to learn about GitHub, and partnering up with other open-source folks around me to build a community to learn about these things. 
+
+This led to making `helper_functions.R` to store various themes and functions that I needed to use over and over again for my thesis. Eventually I learned **why projects** are awesome. Check out LINK AND LINK if you need some convincing. I learned to give my files descriptive names ("data-cleaning.R", "plotting.R") and with time, I learned to **number them**.
+
+When I watched [Julie Lowndes] present Jenny's [Naming Things]() talk, I truly appreciated Jenny's genius. 
+
+### 
+
+- LINK things - means you only ever have to update in one place (of course, try not to break these links) 
+    - use `here::here()` when dealing with paths within projects
+    - use `@inheritParams` when writing documentation for packages
+    - use RMarkdown/LaTeX to link plot outputs to your reports/papers
+- NAME things well
+    - try not to use two words to refer to one thing or one word to refer to two things (Jenny's words)
+    - use a convention and stick with it: "thesis_01_the-title"
+- make things SELF-CONTAINED
+    - use projects
+    - use reprexes when posting to Stack Overflow/GitHub/etc
+    - be clear about what packages you're using - write out all library calls OR use namespaces
+
+
+
