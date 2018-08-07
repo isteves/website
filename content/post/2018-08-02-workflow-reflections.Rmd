@@ -51,6 +51,12 @@ When I watched [Julie Lowndes] present Jenny's [Naming Things]() talk, I truly a
     - use projects
     - use reprexes when posting to Stack Overflow/GitHub/etc
     - be clear about what packages you're using - write out all library calls OR use namespaces
-
+    
+## Resources
+https://www.r-statistics.com/2010/09/managing-a-statistical-analysis-project-guidelines-and-best-practices/
+https://stackoverflow.com/questions/1429907/workflow-for-statistical-analysis-and-report-writing
+https://github.com/klmr/example-r-analysis
+https://github.com/KentonWhite/ProjectTemplate#readme
+https://kbroman.org/steps2rr/pages/organize.html
 
 
