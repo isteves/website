@@ -16,7 +16,7 @@ output:
 <ul>
 <li><a href="#background">Background</a></li>
 <li><a href="#lesson-1-check-suggested-packages">Lesson 1: check suggested packages</a></li>
-<li><a href="#lesson-2-modularize-use-vagrant-scripts-with-extreme-caution">Lesson 2: MODULARIZE + use vagrant scripts with <em>extreme</em> caution</a></li>
+<li><a href="#lesson-2-modularize-use-vagrant-scripts-with-caution">Lesson 2: MODULARIZE + use vagrant scripts with caution</a></li>
 <li><a href="#internet-solutions">Internet solutions</a></li>
 <li><a href="#conclusion">Conclusion</a></li>
 </ul>
@@ -34,12 +34,12 @@ output:
 </div>
 <div id="lesson-1-check-suggested-packages" class="section level3">
 <h3>Lesson 1: check suggested packages</h3>
-<p>My first experience with the two-testing-environment problem involved the <a href="https://github.com/r-lib/httr"><code>httr</code></a> package, which I wrote about in my <a href="https://irene.rbind.io/post/fun-prog-httr/">previous blogpost</a>. In this package, the <code>content()</code> function takes an API response and by default, tries to parse the response. I happily used this to automatically read in a csv–that is, until I realized that it was the source of my debugstration.</p>
+<p>My first experience with the two-testing-environment problem involved the <a href="https://github.com/r-lib/httr"><code>httr</code></a> package, which I wrote about in my <a href="https://irene.rbind.io/post/fun-prog-httr/">previous blogpost</a>. In this package, the <code>content()</code> function takes an API response and by default, tries to parse the response. I happily used this to automatically read in a csv–that is, until I realized that it was the source of my debugging frustration.</p>
 <p>Turns out, the <code>content()</code> function calls <code>readr::read_csv()</code> by default. Since <code>readr</code> is listed in <a href="https://github.com/r-lib/httr/blob/976289a3596dc01dc994f8fd743770a172bbecdb/DESCRIPTION#L19"><code>Suggests</code></a> in the <code>httr</code> package, it was not accounted for in R CMD CHECK. Once I added it to the DESCRIPTION file of my own package, all tests were happy once again.</p>
 </div>
-<div id="lesson-2-modularize-use-vagrant-scripts-with-extreme-caution" class="section level3">
-<h3>Lesson 2: MODULARIZE + use vagrant scripts with <em>extreme</em> caution</h3>
-<p>This time around, I knew right away that it had something to do with my environment, but I still needed hours to figure it out (granted, I ran into this bug late on a Friday so perhaps the other lesson here is…try again Monday). This time, I was in the unfortunate position of a test breaking on a “workhorse” function which–in retrospect–was trying to do way too much:</p>
+<div id="lesson-2-modularize-use-vagrant-scripts-with-caution" class="section level3">
+<h3>Lesson 2: MODULARIZE + use vagrant scripts with caution</h3>
+<p>This time around, I knew right away that the problem had something to do with my environment, but I still needed hours to figure it out (granted, I ran into this bug late on a Friday so perhaps the other lesson here is…try again Monday). This time, I was in the unfortunate position of a test breaking on a “workhorse” function which–in retrospect–was trying to do way too much:</p>
 <ul>
 <li>it sourced functions and ran them (there is a complicated reason for this and yes, this is where it all broke down)</li>
 <li>it copied files from one place to another (and renamed them in the process)</li>
@@ -53,7 +53,7 @@ output:
 </blockquote>
 <p>or in Twitter form:</p>
 {{% tweet "909242896691466240" %}}
-<p>However, <em>even</em> if they are only used once, functions are also important to keep code <em>modular</em> and <em>readable</em>. <strong>Modularity</strong> is particularly useful for testing and debugging. <strong>Readability</strong> can be enhanced by using small, well-named helpers rather than comments. Check out <a href="https://www.youtube.com/watch?v=7oyiPBjLAWY?start=1294">Code Smells and Feels</a> for an example:</p>
+<p>However, even if they are only used <em>once</em>, functions help keep code <em>modular</em> and <em>readable</em>. <strong>Modularity</strong> is particularly useful for testing and debugging. <strong>Readability</strong> can be enhanced by using small, well-named helpers rather than comments. Check out <a href="https://www.youtube.com/watch?v=7oyiPBjLAWY?start=1294">Code Smells and Feels</a> for an example:</p>
 <iframe width="560" height="315" src="https://www.youtube.com/embed/7oyiPBjLAWY?start=1294" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
 </iframe>
 <p>Finally, I dug into my ill-fated sourcery. Because these extra functions were not an official part of the package (they live in <code>inst</code>), there was no automatic check on them to catch packages not listed in the <code>DESCRIPTION</code> file. Thus, they were only tested when called explicitly, and broke in weird ways.</p>
@@ -79,15 +79,15 @@ Last 13 lines of output:
 </li>
 <li>In the same issue, <a href="https://github.com/espinielli">espinielli</a> writes: “In my particular case, the discrepancy I got between <code>devtools::test()</code> and <code>devtools::check()</code> was due to having the definition of a new unit in a .R file rather than inside <code>.onLoad()</code> (and removing it in <code>.onUnload()</code>).”</li>
 <li>On StackOverflow, <a href="https://stackoverflow.com/questions/42272119/r-cmd-check-fails-devtoolstest-works-fine">wligtenberg</a> ended up self-solving:
-“In the end, the issue was trivial. I used base::sort() to create the levels of a factor. (To ensure that they would always align, even if the data was in a different order.) The problem is, that the default sort method depends on the locale of your system. And R CMD check uses a different locale than my interactive session.”</li>
+“In the end, the issue was trivial. I used <code>base::sort()</code> to create the levels of a factor. (To ensure that they would always align, even if the data was in a different order.) The problem is, that the default sort method depends on the locale of your system. And <code>R CMD check</code> uses a different locale than my interactive session.”</li>
 </ul>
 </div>
 <div id="conclusion" class="section level3">
 <h3>Conclusion</h3>
 <p>Debugging this kind of error is no joke! In the future, I would start with the following:</p>
 <ul>
-<li>check the DESCRIPTION file – does it really list <em>all</em> the packages I’m using?</li>
-<li>check the <code>Suggests</code> section in other packages – make sure you list any relevant packages somewhere, too</li>
+<li>check the DESCRIPTION file–does it really list <em>all</em> the packages I’m using?</li>
+<li>check the <code>Suggests</code> section in other packages–make sure you list any relevant packages in your DESCRIPTIOM file</li>
 <li>use <code>Sys.getenv()</code> to make sure you’re not making any environmental assumptions that interfere with testing</li>
 </ul>
 <p>Finally, <a href="http://adv-r.had.co.nz/Exceptions-Debugging.html#debugging-techniques">be strategic</a>: <em>isolate</em> the problem, test it <em>systematically</em>, and <em>learn</em> from the pain of those who debugged before you.</p>
