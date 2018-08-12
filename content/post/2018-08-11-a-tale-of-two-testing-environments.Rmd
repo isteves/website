@@ -1,0 +1,94 @@
+---
+title: A Tale of Two Testing Environments
+author: Irene Steves
+date: '2018-08-11'
+slug: two-test-env
+categories: []
+tags: []
+output:
+  blogdown::html_page:
+    toc: true
+    toc_depth: 3
+---
+
+Today marks the second time I've debugged the problem of tests that **pass** with `devtools::test()` but **fail** with `devtools::check()`. Since I'm now riding my debug-success high (and hope never to repeat this again), here is a blogpost.
+
+![](https://github.com/isteves/website/blob/master/static/taleoftwocities.jpg?raw=true)
+
+### Background
+
+There are _some_ resources online ([see below](#internet-solutions)) to help with debugging this particular problem, but they are sparse and situation-specific.  In the [Automated Checking](http://r-pkgs.had.co.nz/check.html) chapter of [R packages](http://r-pkgs.had.co.nz/), Hadley writes:
+
+>Occasionally you may have a problem where the tests pass when run interactively with `devtools::test()`, but fail when in `R CMD check`. This usually indicates that you’ve made a faulty assumption about the testing environment, and it’s often hard to figure it out.
+
+This is _so true_, but also not really what I wanted to read when I was stuck in this situation.
+
+### Lesson 1: check suggested packages
+
+My first experience with the two-testing-environment problem involved the [`httr`](https://github.com/r-lib/httr) package, which I wrote about in my [previous blogpost](https://irene.rbind.io/post/fun-prog-httr/).  In this package, the `content()` function takes an API response and by default, tries to parse the response.  I happily used this to automatically read in a csv--that is, until I realized that it was the source of my debugstration.
+
+Turns out, the `content()` function calls `readr::read_csv()` by default. Since `readr` is listed in [`Suggests`](https://github.com/r-lib/httr/blob/976289a3596dc01dc994f8fd743770a172bbecdb/DESCRIPTION#L19) in the `httr` package, it was not accounted for in R CMD CHECK. Once I added it to the DESCRIPTION file of my own package, all tests were happy once again.
+
+### Lesson 2: MODULARIZE + use vagrant scripts with _extreme_ caution
+
+This time around, I knew right away that it had something to do with my environment, but I still needed hours to figure it out (granted, I ran into this bug late on a Friday so perhaps the other lesson here is...try again Monday). This time, I was in the unfortunate position of a test breaking on a "workhorse" function which--in retrospect--was trying to do way too much:
+
+- it sourced functions and ran them (there is a complicated reason for this and yes, this is where it all broke down)
+- it copied files from one place to another (and renamed them in the process)
+- it created a file based off of a template function
+- it read a YAML file
+
+The YAML part was actually the easiest, since it was already its own function.  I wrote some tests and confirmed that this was not the breaking piece. 
+
+The other parts were a bit harder to figure out because they were not modularized. Starting out with functional programming, it's easy to get stuck on the "three times" rule:
+
+>You should consider writing a function whenever you’ve copied and pasted a block of code more than twice (i.e. you now have three copies of the same code).  ([R4DS](http://r4ds.had.co.nz/functions.html#when-should-you-write-a-function))
+
+or in Twitter form:
+
+```{r echo=FALSE}
+blogdown::shortcode('tweet', '909242896691466240')
+```
+
+However,  _even_ if they are only used once, functions are also important to keep code _modular_ and _readable_. **Modularity** is particularly useful for testing and debugging. **Readability** can be enhanced by using small, well-named helpers rather than comments.  Check out [Code Smells and Feels](https://www.youtube.com/watch?v=7oyiPBjLAWY?start=1294) for an example:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/7oyiPBjLAWY?start=1294" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+Finally, I dug into my ill-fated sourcery. Because these extra functions were not an official part of the package (they live in `inst`), there was no automatic check on them to catch packages not listed in the `DESCRIPTION` file. Thus, they were only tested when called explicitly, and broke in weird ways.
+
+Coincidentally, the culprit happened to be `readr` again. Once I put it into my `DESCRIPTION`, I was on the home stretch.
+
+In retrospect, the error message about failing namespaces makes a _bit_ more sense:
+
+```
+checking tests ... ERROR
+  Running 'testthat.R'
+Running the tests in 'tests/testthat.R' failed.
+Last 13 lines of output:
+  5: getExportedValue(pkg, name)
+  6: asNamespace(ns)
+  7: getNamespace(ns)
+  8: tryCatch(loadNamespace(name), error = function(e) stop(e))
+  9: tryCatchList(expr, classes, parentenv, handlers)
+  10: tryCatchOne(expr, names, parentenv, handlers[[1L]])
+  11: value[[3L]](cond)
+```
+
+### Internet solutions
+
+In my meanderings through GitHub issues and StackOverflow, I came across some other solutions to this problem:
+
+- In [this](https://github.com/r-lib/testthat/issues/86) GitHub issue,  [lhsego](https://github.com/lhsego) writes: "Simply add `Sys.setenv("R_TESTS" = "")` as the first line in tests/testthat.R"  
+- In the same issue, [espinielli](https://github.com/espinielli) writes: "In my particular case, the discrepancy I got between `devtools::test()` and `devtools::check()` was due to having the definition of a new unit in a .R file rather than inside `.onLoad()` (and removing it in `.onUnload()`)."
+- On StackOverflow, [wligtenberg](https://stackoverflow.com/questions/42272119/r-cmd-check-fails-devtoolstest-works-fine) ended up self-solving: 
+"In the end, the issue was trivial. I used base::sort() to create the levels of a factor. (To ensure that they would always align, even if the data was in a different order.)  The problem is, that the default sort method depends on the locale of your system. And R CMD check uses a different locale than my interactive session."
+
+### Conclusion
+
+Debugging this kind of error is no joke! In the future, I would start with the following:
+
+- check the DESCRIPTION file -- does it really list _all_ the packages I'm using?
+- check the `Suggests` section in other packages -- make sure you list any relevant packages somewhere, too
+- use `Sys.getenv()` to make sure you're not making any environmental assumptions that interfere with testing
+
+Finally, [be strategic](http://adv-r.had.co.nz/Exceptions-Debugging.html#debugging-techniques): _isolate_ the problem, test it _systematically_, and _learn_ from the pain of those who debugged before you.
