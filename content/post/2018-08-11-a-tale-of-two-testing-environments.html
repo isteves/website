@@ -81,14 +81,16 @@ Last 13 lines of output:
 <li>On StackOverflow, <a href="https://stackoverflow.com/questions/42272119/r-cmd-check-fails-devtoolstest-works-fine">wligtenberg</a> ended up self-solving:
 “In the end, the issue was trivial. I used <code>base::sort()</code> to create the levels of a factor. (To ensure that they would always align, even if the data was in a different order.) The problem is, that the default sort method depends on the locale of your system. And <code>R CMD check</code> uses a different locale than my interactive session.”</li>
 </ul>
+<p>In response to my tweet about this blogpost, <a href="https://twitter.com/TonyElHabr">Tony Elhabr</a> pointed out this passage in the <a href="http://r-pkgs.had.co.nz/tests.html">Tests</a> chapter for the R Packages book that highlights a few other gotchas:</p>
+{{% tweet "1028677497670590464" %}}
 </div>
 <div id="conclusion" class="section level3">
 <h3>Conclusion</h3>
 <p>Debugging this kind of error is no joke! In the future, I would start with the following:</p>
 <ul>
 <li>check the DESCRIPTION file–does it really list <em>all</em> the packages I’m using?</li>
-<li>check the <code>Suggests</code> section in other packages–make sure you list any relevant packages in your DESCRIPTIOM file</li>
-<li>use <code>Sys.getenv()</code> to make sure you’re not making any environmental assumptions that interfere with testing</li>
+<li>check the <code>Suggests</code> section in other packages–make sure you list any relevant packages in your DESCRIPTION file</li>
+<li>clear your environment before running interactive tests and check for the environmental variables listed <a href="#internet-solutions">above</a></li>
 </ul>
 <p>Finally, <a href="http://adv-r.had.co.nz/Exceptions-Debugging.html#debugging-techniques">be strategic</a>: <em>isolate</em> the problem, test it <em>systematically</em>, and <em>learn</em> from the pain of those who debugged before you.</p>
 </div>

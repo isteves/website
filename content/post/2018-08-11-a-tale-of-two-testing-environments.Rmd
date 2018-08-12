@@ -83,12 +83,18 @@ In my meanderings through GitHub issues and StackOverflow, I came across some ot
 - On StackOverflow, [wligtenberg](https://stackoverflow.com/questions/42272119/r-cmd-check-fails-devtoolstest-works-fine) ended up self-solving: 
 "In the end, the issue was trivial. I used `base::sort()` to create the levels of a factor. (To ensure that they would always align, even if the data was in a different order.)  The problem is, that the default sort method depends on the locale of your system. And `R CMD check` uses a different locale than my interactive session."
 
+In response to my tweet about this blogpost, [Tony Elhabr](https://twitter.com/TonyElHabr) pointed out this passage in the [Tests](http://r-pkgs.had.co.nz/tests.html) chapter for the R Packages book that highlights a few other gotchas:
+
+```{r echo=FALSE}
+blogdown::shortcode('tweet', '1028677497670590464')
+```
+
 ### Conclusion
 
 Debugging this kind of error is no joke! In the future, I would start with the following:
 
 - check the DESCRIPTION file--does it really list _all_ the packages I'm using?
-- check the `Suggests` section in other packages--make sure you list any relevant packages in your DESCRIPTIOM file
-- use `Sys.getenv()` to make sure you're not making any environmental assumptions that interfere with testing
+- check the `Suggests` section in other packages--make sure you list any relevant packages in your DESCRIPTION file
+- clear your environment before running interactive tests and check for the environmental variables listed [above](#internet-solutions)
 
 Finally, [be strategic](http://adv-r.had.co.nz/Exceptions-Debugging.html#debugging-techniques): _isolate_ the problem, test it _systematically_, and _learn_ from the pain of those who debugged before you.
