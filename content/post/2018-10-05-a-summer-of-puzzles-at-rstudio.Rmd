@@ -1,0 +1,95 @@
+---
+title: A summer of puzzles at RStudio
+author: Irene Steves
+date: '2018-10-05'
+slug: summer-rstudio
+categories: []
+tags: []
+---
+
+This summer, I teamed up with Jenny Bryan to create a series of coding puzzles, which (fingers crossed!) will be released next spring.  It was exciting to start a project from the ground up, growing and shaping it over the 10-ish weeks of the internship.  
+
+### Project background
+
+The [Advent of Code](https://adventofcode.com/) puzzles were a major source of inspiration for the project. I spent a fair amount of my winter holidays last year [solving the Advent of Code in R](https://isteves.github.io/advent_of_code_2017/index.html). It was addictive and fun, but I had to stretch my R skills in strange, clunky ways.
+
+Little did I know that Jenny was working on the Advent of Code puzzles, too. But she took it one step further.  She thought, rather than struggling to solve computer science puzzles in R, why not create puzzles that highlight what R is _good_ at? 
+
+Thus, the _Tidies of March_[^3] was born. 
+
+A few months later, the stars aligned, and I was paired with Jenny for a summer internship at RStudio. I had a chance to create Advent of Code-like puzzles geared towards data wranglers and R enthusiasts like me!
+
+[^3]: You may be familiar with the ominous phrase, "beware the ides of March." Shakespeare fans might recognize it from [The Tragedy of Julius Caesar](http://www.gutenberg.org/cache/epub/1120/pg1120.txt). In the famous scene, a soothsayer warns Julius Caesar about 15th of March, the day on which he is eventually stabbed to death.
+
+### Summer schedule
+
+I started off the summer at RStudio's Boston office. I quickly learned that there was a lot more to RStudio than just the tidyverse and the IDE. My experience there inspired me to try out three of RStudio's professional products: [RStudio Cloud](https://rstudio.cloud), [Connect](https://www.rstudio.com/products/connect/), and [Package Manager](https://www.rstudio.com/products/package-manager/).[^4] Of the three, I ended up using RStudio Cloud the most. It was a handy tool for sharing puzzles--code, data, packages, and all--and for exploring my puzzle testers' code afterwards. I also used it to check that I could indeed install my package in a clean R session. And on top of that, it's currently free! (Check out Mine Çetinkaya-Rundel's [talk](https://www.causeweb.org/cause/ecots/ecots18/tech-talk/4) if you want to learn more.)
+
+[^4]: Thanks to [Sean Lopp](https://twitter.com/lopp_sean) and [Karen Medina](https://twitter.com/KMedinaTheDev) for helping me troubleshoot throughout the summer!
+
+After Boston, I was completely remote. I enjoyed the freedom and flexibility of working remotely, but I also appreciated the "anchors" in my schedule. These included weekly video chats with Jenny (though towards the end of summer the meetings grew further apart), weekly tidyverse meetings, occasional intern hangouts with Becky and Max, and until the middle of August, weekly intern coffee chats. 
+
+In addition to virtual meetings, Slack and Twitter were key sources of inspiration and support when working remotely. I especially loved our intern Slack, where we could share problems and encouragement in a supportive, emoji-filled space. Big shoutout to my fellow interns Dana, Alex, Fanny, and Tim - you're the best!
+
+Meetings and presentations scattered throughout the summer gave me some extra structure. These included:
+
+- a meeting with Jenny in Vancouver
+- a virtual presentation/demo to the RStudio folks gathered at the Joint Statistical Meeting (JSM)
+- a presentation at [R-Ladies Paris](https://isteves.github.io/paris/rladies.html#1) while traveling through Europe (thanks [Diane Beldame](https://twitter.com/dianebeldame) for organizing!)
+- virtual meetings (and written correspondence) with puzzle-testing volunteers (thank you Gemma, Gabriela, Emi, Laura, Ryann, Julien, Mine, Dana, and others!)
+- a final presentation to the tidyverse team in last weeks of my internship
+
+Each meeting forced me to reflect on different aspects of the project, and helped me to refine my plans for moving forward. 
+
+### Puzzles and infrastructure 
+
+My internship was roughly divided into two parts: (1) the puzzles themselves and (2) the infrastructure around them. 
+
+Puzzle-making was a punctuated process[^1]--each burst of puzzle-making was accompanied by hours of searching the internet for inspiration. Sometimes I was at a loss for an appropriate data problem to focus on; other times, I wasn't sure what story to build around the problem. In the end, I found that the tidyverse functions themselves were an amazing source of inspiration. For example, take the `separate_rows` function. It comes in handy in cases like this:
+
+[^1]: I'm borrowing this term from the idea of ["punctuated equilibrium"](http://thebrain.mcgill.ca/flash/capsules/outil_bleu09.html) in evolution.
+
+```{r}
+library(tidyverse)
+
+ex1 <- tibble(person = c("Joey", "Kris"),
+       food = c("lentil soup; hummus with pita",
+                "green curry; rice; papaya salad"))
+ex1
+
+ex1 %>% 
+    separate_rows(food, sep = "; ")
+```
+
+While you can solve this problem in a number of other ways, the _existence_ of this function speaks the prevalence of this type of data manipulation. And this is only one example of that. Take a look through your favorite tidyverse packages and I'm sure you'll discover useful functions that you've missed!  
+
+```{r eval = FALSE}
+# try running this code to see the functions and data exported by the dplyr package:
+library(dplyr)
+ls("package:dplyr")
+```
+    
+In addition to the tidyverse, I also ended up relying heavily on the [Corpora](https://github.com/dariusk/corpora) project as source material for my datasets. Gábor Csárdi's [rcorpora](https://github.com/gaborcsardi/rcorpora) package made it particularly easy to use the Corpora data in R. Along the way, I discovered other neat packages for making fake data, including [wakefield](https://github.com/trinker/wakefield), [charlatan](https://github.com/ropensci/charlatan), and [ids](https://github.com/richfitz/ids). A few #rstats folks also directly contributed puzzle data/ideas: big thanks to [Maëlle Salmon](https://twitter.com/ma_salmon), [Tom Mock](https://twitter.com/thomas_mock), and [Julia Silge](https://twitter.com/juliasilge), as well as fellow interns Alex and Dana!
+
+Besides the puzzles themselves, we also needed a way to deliver the puzzles to users. To start, I prototyped a web interface using a [Shiny RMarkdown](https://bookdown.org/yihui/rmarkdown/shiny-documents.html) document. In building this interface, the different components of the puzzles became more clear to me. I separated data generation scripts from solution scripts, and I created YML files for each puzzle to store associated metadata. Jenny's [repo](https://github.com/jennybc/vanNH) for calculating in-house statistics for the Vancouver Nighthawks ultimate frisbee team opened my eyes to the ways you can use YML files beyond the RMarkdown/bookdown/pkgdown context.
+
+The next step was creating a package to allow users to directly access puzzles and submit solutions _in R_. Eventually, I supplemented the R package with a [plumber](https://www.rplumber.io/docs/) API to separate the data generation and solution code from user-facing functions (check out Colin Rundel's [talk](https://www.rstudio.com/resources/videos/kaggle-in-the-classroom-using-r-and-github-to-run-predictive-modeling-competitions/) and [materials](https://github.com/rundel/Presentations/tree/master/RStudioConf2018/examples/plumber) for a similar example). 
+
+In perfecting the infrastructure for the puzzles, I was constantly changing the structure of my project. My GitHub contributions attest to the huge amount of organizing and _re_-organizing I did this summer[^2]: 
+
+![](https://github.com/isteves/website/blob/2111a7d2e17d3bc75b175277b2789757a1ee235f/static/tom-commits.PNG?raw=true)
+
+[^2]: If you guessed from these commits that I went on vacation in August, you'd be correct!
+
+### Lessons learned
+
+Jenny had the amazing ability to bring my fuzzy thoughts into focus, and to guide me towards good examples and best practices. In the process of working with her, I took away many useful lessons:
+
+- **Be thoughtful when [naming things](https://speakerdeck.com/jennybc/how-to-name-files).** Smart naming made it easy to work with files and functions. Once I got things set up right, I could programmatically find all functions related to my web API (because I had used the suffix, `_api`), or access the data of any puzzle based on its associated puzzle number. If I could never remember the name of a function, it was often a sign that I'd given it a bad name. 
+- **Use GitHub issues to feel good.** Early on, Jenny advised me to break GitHub issues into small pieces to reap the psychological rewards of closing issues.  And I must say, it _really_ is more satisfying to close 5 issues than to tick off 5 checkboxes within a single issue. It was also quite satisfying to emoji-fy my issue labels (thanks Locke Data for the [inspiration](https://twitter.com/i_steves/status/1017095491824373761)). 
+- **Iterate quickly.** Nobody writes perfectly bug-free code from the get go. But in order to efficiently debug your work, you need to be able to iterate on concepts quickly. If you're spending 20 minutes waiting for your code to run, think about how you can cut down on the time. Perhaps you can use a separate R process. Perhaps you need to try your solution on a bite-sized piece of your problem until you've perfected it. (I plan to expand more on this point in a follow-up post about plumber.)
+- **Thinking inside the box.** Rather than going wild with GitHub repositories for every facet of the project, Jenny kept me in check with a single GitHub repository for _everything_. Sometimes, this drove me a bit crazy, but ultimately, this forced me to be very explicit and structured when it came to files and folders. Every once in a while I would try something out in a new project, but any successful side experiment always ended up in the main project.
+- **Simple interfaces.** As a developer, it's easy to slip into the trap of giving a function too much flexibility. Rather than thinking about what arguments are convenient for _you_, think about which arguments the user really needs. In the last week of my internship, I went on an argument-cutting rampage. Though some of my tests and internal functions had to change, my user-facing functions ended up looking cleaner and working more robustly.
+
+I learned a LOT about software development in R this summer. While I wish I could share the puzzles right away, I'm also excited to see how the project continues to evolve in Jenny's hands. I'm grateful for the many people who have helped and encouraged me along the way. Thank you RStudio, and especially the tidyverse team, for a teRRific summer!
+
