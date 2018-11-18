@@ -1,0 +1,99 @@
+---
+title: Iterative testing with plumber
+author: Irene Steves
+date: '2018-09-23'
+draft: true
+slug: iterative-testing-plumber
+categories: []
+tags: []
+---
+
+This summer, I've fiddled around quite a bit with `plumber`, an R package for creating your very own web API.  
+
+I got my start with [Jeff Allen's webinar](https://resources.rstudio.com/webinars/plumber-api-final) on the topic ([slides here](https://github.com/rstudio/webinars/tree/master/60-plumber). I later dug into it some more using the [plumber bookdown](https://www.rplumber.io/docs/index.html). If you want to get started, I recommend going through the webinar and some examples.  This blogpost is not a plumber tutorial. Instead, I'll highlight how I gradually improved on my plumber building/testing workflow. 
+
+## Tweaking and testing
+
+The [Stat545 dplyr tutorial](http://stat545.com/block010_dplyr-end-single-table.html#grand-finale) ends with a "grand finale" -- a paragraph-sized chunk of dplyr code to read through and ponder over. The code and explanation includes this excellent quote:
+
+>These commands do not leap fully formed out of anyone’s forehead – they are built up gradually, with lots of errors and refinements along the way.
+
+Just as data wrangling steps are written and run and tweaked and run and reordered and run again, workflows and functions are built up through the same cycles of tweaking and testing. One [key lesson](https://irene.rbind.io/post/summer-rstudio/#lessons-learned) I learned from Jenny during my internship with her is that the faster you can iterate over your code, the faster you can build up a working product.
+
+## Iteration in plumber
+
+Plumber comes bundled with the Swagger service, which provides an interactive interface for testing your API. 
+
+![Swagger is a very user-friendly interface for testing APIs, but too much pointy-clicky for iterative testing](https://github.com/isteves/website/blob/master/static/swagger.png?raw=true)
+
+However, testing means clicking through your functions, and manually entering values for your arguments. In other words, too much pointy-clicky for quick iteration.
+
+Since I had access to RStudio Connect, I also tested my web API by deploying it to Connect and then running a testing script that consisted mainly of `httr::GET()` calls. While the `httr` script was a step in the right direction, this process ended up being _painfully slow_ because (a) all the packages get bundled up with each deployment and (b) my set-up involved a link to my private GitHub package that only updated once an hour. 
+
+At some point, Jenny pointed out that I could use a separate R process to run the API locally _and_ test it with code. This was a total game changer. I ran with this for a while, first using two RStudio windows, and later switching to an extra terminal inside of a single RStudio window. 
+
+It wasn't too long before I finally discovered [this key vignette](https://cran.r-project.org/web/packages/rstudioapi/vignettes/terminal.html) about interacting with terminals. Using the  [`rstudioapi`](https://github.com/rstudio/rstudioapi) package, I could interact with the RStudio IDE using R code!
+
+## Terminals in RStudio
+
+For those of you not familiar with the terminal, you can find it as one of the tabs in your console window within RStudio. Alternatively, you can use `Tools` --> `Terminal` --> `Move Focus to Terminal` (alt + shift + t on Windows).
+
+I typically use the terminal to deal with tricky git issues or to open the project folder in a new window with `open .`. Occasionally, I've used it to start up a new R process (mostly when using RStudio Server) by typing `R` into the terminal. 
+
+To iterate more quickly with plumber, I first ran my plumber API from the extra R process in the terminal.  Eventually, I developed a function that took advantage of `rstudioapi::terminalCreate()` to create a new terminal and `terminalSend()` to send it commands.
+
+## The function development process
+
+The first working version of my function looked something like this:
+
+```{r eval = FALSE}
+start_plumber <- function(path, port) {
+    # create new terminal & save the terminal name
+    trml <- rstudioapi::terminalCreate(show = FALSE)
+    # start R process in terminal
+    rstudioapi::terminalSend(trml, "R\n") 
+    
+    # nap time!
+    Sys.sleep(2)
+    
+    # send the plumber command to R
+    cmd <- sprintf('plumber::plumb("%s")$run(port = %s)\n', path, port)
+    rstudioapi::terminalSend(trml, cmd)
+    
+    # invisibly return the terminal name
+    invisible(trml)
+}
+```
+
+A few things here may strike you as strange or overly complicated. First, what's with the `\n`'s? Simple answer: that's how you "press enter" with code. Second, why am I napping in the middle of a function? After "losing" the next command a few times, I realized that I needed to give the R process a few extra moments to finish starting up before sending it a command. 
+
+In addition to starting my R process, I also wanted to be able to kill it. I created a "package-wide variable" to transfer information between functions without cluttering up the global environment. This concept was new to me, but I found [this blogpost](https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/) (coincidentally, also by Jeff Allen) and this real-life example in the [googledrive package](https://github.com/tidyverse/googledrive/blob/master/R/aaa.R) to be useful starting points for understanding how it works.
+
+Or as Jenny explained to me: a package-wide variable is like [Hermione's bottomless bag](http://harrypotter.wikia.com/wiki/Hermione_Granger%27s_beaded_handbag). Every time a package is loaded, the bag is empty. Your functions can put whatever you want into the bag, but once you restart your R session, the bag becomes empty again.
+
+Thus, with my `.state` variable, I could store the terminal name from `start_plumber()` and access it later with `kill_plumber()`.
+
+```{r}
+.state <- new.env(parent = emptyenv())
+
+start_plumber <- function(path, port) {
+    trml <- rstudioapi::terminalCreate(show = FALSE)
+    rstudioapi::terminalSend(trml, "R\n") 
+    Sys.sleep(2)
+    cmd <- sprintf('plumber::plumb("%s")$run(port = %s)\n', path, port)
+    rstudioapi::terminalSend(trml, cmd)
+    
+    .state[["trml"]] <- trml #store terminal name
+    invisible(trml)
+}
+
+kill_plumber <- function() {
+    rstudioapi::terminalKill(.state[["trml"]]) #access terminal name
+}
+```
+
+
+
+## Custom data types
+
+
