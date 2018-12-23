@@ -1,0 +1,132 @@
+---
+title: Iterative testing with plumber
+author: Irene Steves
+date: '2018-12-23'
+draft: false
+output:
+  blogdown::html_page:
+    toc: true
+    toc_depth: 3
+slug: iterative-testing-plumber
+categories: []
+tags: []
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#the-coding-process">The coding process</a></li>
+<li><a href="#iteration-in-plumber">Iteration in plumber</a></li>
+<li><a href="#function-evolution">Function evolution</a></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+</div>
+
+<p>This summer, I fiddled around with <code>plumber</code>, an R package for creating your very own web API. I got my start with Jeff Allen’s <a href="https://resources.rstudio.com/webinars/plumber-api-final">webinar</a>, “Plumbing APIs with plumber” (<a href="https://github.com/rstudio/webinars/tree/master/60-plumber">slides here</a>). I later dug into the topic some more using the <a href="https://www.rplumber.io/docs/index.html">plumber bookdown</a>, along with a lot of trial and error.</p>
+<p>In this blogpost, I’ll highlight how I gradually improved on my plumber building/testing workflow and eventually automated my testing steps.</p>
+<div id="the-coding-process" class="section level2">
+<h2>The coding process</h2>
+<p>The <a href="http://stat545.com/block010_dplyr-end-single-table.html#grand-finale">Stat545 dplyr tutorial</a> ends with a “grand finale” – a paragraph-sized chunk of dplyr code to read through and ponder over. The code is accompanied by this excellent explanation of the coding process:</p>
+<blockquote>
+<p>These commands do not <a href="http://2.bp.blogspot.com/_9A420Nuu0xo/TNS7JZdyQHI/AAAAAAAAAHg/cU2JP2DfJqk/s1600/D&#39;Aulaire+3.png">leap fully formed out of anyone’s forehead</a> – they are built up gradually, with lots of errors and refinements along the way.</p>
+</blockquote>
+<p>Just as data wrangling steps are built up gradually, workflows and functions are developed through similar cycles of tweaking and testing.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> One <a href="https://irene.rbind.io/post/summer-rstudio/#lessons-learned">key lesson</a> I learned from Jenny during my internship with her is that the faster you can iterate over your code, the faster you can build up a working product.</p>
+</div>
+<div id="iteration-in-plumber" class="section level2">
+<h2>Iteration in plumber</h2>
+<p>Plumber comes bundled with the Swagger service, which provides an interactive interface for testing your API. When you run <code>plumber::plumb("my_plumber_file.R")</code>, you end up with a URL like <code>http://127.0.0.1:8484/__swagger__/</code>, which you can use to access the Swagger interface on any local browser. The interface allows you to play with variable values, execute your command, and view the response.</p>
+<p><img src="https://github.com/isteves/website/blob/master/static/swagger.png?raw=true" /></p>
+<p>However, when trying to fix a bug in your code, it becomes clear that checking every small change in your code via Swagger is inefficient. It means manually entering values for your arguments, pointy-clicking on execute, and visually checking the response. All the while, Swagger takes over your R process so you can’t run any other commands.</p>
+<p>After some weeks of awkward debugging, Jenny pointed out that I could use a separate R process to run the API locally <em>and</em> test it with code. This was a total game changer.</p>
+<p><img src="https://media.giphy.com/media/rJvYq4DjfP7d6/giphy.gif" /></p>
+<p>I started using two RStudio windows–one to run the API (<code>plumber::plumb()</code>) and the other to run scripts for testing. I later found it more convenient to use a single RStudio window with an extra terminal<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> inside of it, as shown below. The extra terminal was dedicated to the API, which kept the console free for whatever code I wanted to test.</p>
+<p>Thus, rather than letting Swagger run a curl command for me, I could write the same commands in R with <code>httr::GET()</code>. I could write a whole slew of tests with different combinations of variables to rerun each time I made a change. Rather than checking the responses visually, I could also automate the checking process by taking advantage of the <a href="https://github.com/r-lib/testthat"><code>testthat</code></a> framework.</p>
+<p><img src="https://github.com/isteves/website/blob/086e5adcdbcda4a9beaa2c4286c9cb825f2787c2/static/plumber_2term_lab.png?raw=true" /></p>
+<p>It wasn’t too long before I finally discovered <a href="https://cran.r-project.org/web/packages/rstudioapi/vignettes/terminal.html">this key vignette</a> about interacting with terminals using the <a href="https://github.com/rstudio/rstudioapi"><code>rstudioapi</code></a> package. With the package, I could interact with the RStudio IDE using R code!</p>
+</div>
+<div id="function-evolution" class="section level2">
+<h2>Function evolution</h2>
+<p>Rather than manually opening up a new terminal, starting a new R process, and running the plumber command, I wanted a function that would do the work for me.</p>
+<p>The <strong>first working version</strong> of my function looked something like this:</p>
+<pre class="r"><code>start_plumber &lt;- function(path, port) {
+    # create new terminal &amp; save the terminal name to `trml`
+    trml &lt;- rstudioapi::terminalCreate(show = FALSE)
+    # start R process in terminal by sending the command, &quot;R\n&quot;
+    rstudioapi::terminalSend(trml, &quot;R\n&quot;) 
+    
+    # nap time!
+    Sys.sleep(2)
+    
+    # send the plumber command to R
+    cmd &lt;- sprintf(&#39;plumber::plumb(&quot;%s&quot;)$run(port = %s)\n&#39;, path, port)
+    rstudioapi::terminalSend(trml, cmd)
+    
+    # invisibly return the terminal name
+    invisible(trml)
+}</code></pre>
+<p>A few things here may strike you as strange or overly complicated…</p>
+<ul>
+<li>First, what’s with the <code>\n</code>’s? Simple answer: that’s how you “press enter” with code.</li>
+<li>Second, what’s with the weird plumber syntax where you have a second function connected with a <code>$</code> sign, as in <code>plumb(PATH)$run(PORT)</code>? All I can tell you is that it has something to do with R6 classes. If you want to check out all the possible sub-functions and arguments, check out the <code>plumber</code> object within the plumber package.</li>
+<li>Finally, why am I napping in the middle of a function? After “losing” the plumber command a few times, I realized that I needed to give the R process a few extra moments to finish starting up before sending it a command. Commands sent prematurely just disappeared.</li>
+</ul>
+<p>In my <strong>next iteration</strong>, I wanted to not only start a new terminal, but kill it once I was done testing. In order to kill the correct terminal, I needed a way of remembering its name. For example, a simple way would be to store the name as a variable in the global environment (for example, as a variable <code>trml</code>), and then use this variable in my <code>kill_plumber()</code> function.</p>
+<p>To avoid cluttering up the user’s global environment (and also make sure the user wouldn’t suddenly delete or change the variable), I opted for a “package-wide variable” or “package state” instead.<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> The package state is different from a normal variable in several ways:</p>
+<ul>
+<li>The package state is stored in the <em>package</em> environment, rather than in the global environment</li>
+<li>The package state can only be accessed and manipulated by functions within the package. A user cannot access the state directly; other packages also cannot access the state</li>
+<li>Every time I load the package with a <code>library()</code> call, the package state is created afresh. As long as I don’t restart my R session, my functions can continue to add things and access information stored in it. Once I reload the package, the package state goes back to square one</li>
+</ul>
+<p>Thus, with my <code>.state</code> variable, I could store the terminal name from <code>start_plumber()</code> and access it later with <code>kill_plumber()</code>:</p>
+<pre class="r"><code>.state &lt;- new.env(parent = emptyenv()) #create .state when package is first loaded
+
+start_plumber &lt;- function(path, port) {
+    trml &lt;- rstudioapi::terminalCreate(show = FALSE)
+    rstudioapi::terminalSend(trml, &quot;R\n&quot;) 
+    Sys.sleep(2)
+    cmd &lt;- sprintf(&#39;plumber::plumb(&quot;%s&quot;)$run(port = %s)\n&#39;, path, port)
+    rstudioapi::terminalSend(trml, cmd)
+    
+    .state[[&quot;trml&quot;]] &lt;- trml #store terminal name
+    invisible(trml)
+}
+
+kill_plumber &lt;- function() {
+    rstudioapi::terminalKill(.state[[&quot;trml&quot;]]) #access terminal name
+}</code></pre>
+<p>In the <strong>next version</strong> of my function, I added a <code>check_output()</code> helper function to include extra logic when my mid-function nap wasn’t long enough. To check that the plumber API had finished deploying, the function looked for the phrase “Starting server to listen on port” in the terminal output (<code>terminalBuffer()</code>). If it didn’t detect the phrase, the function napped for another 2 seconds, and then tried again. After 10 unsuccessful tries, the function would give up and return the message “Check terminal.” If, on the other hand, it <em>was</em> successful, it returned everything in the terminal output after “Starting server to listen on port” as a message.</p>
+<pre class="r"><code>check_output &lt;- function(trml) {
+    cmd_snippet &lt;- &quot;Starting server to listen on port&quot;
+    
+    result &lt;- rstudioapi::terminalBuffer(trml)
+    line_cmd &lt;- grep(cmd_snippet, result)
+
+    count &lt;- 0
+    while(length(line_cmd) == 0 &amp;&amp; count &lt; 10){
+        Sys.sleep(2)
+        result &lt;- rstudioapi::terminalBuffer(trml)
+        line_cmd &lt;- grep(cmd_snippet, result)
+        count &lt;- count + 1
+    }
+    if(length(line_cmd) == 0) stop(&quot;Check terminal&quot;)
+    
+    msg &lt;- result[seq(utils::tail(line_cmd, 1), length(result))]
+    message(paste(msg, collapse = &quot;\n&quot;))
+    invisible(msg)
+}</code></pre>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>Over time, my code evolved into the functions found on my <a href="https://github.com/isteves/plumbplumb">“plumbplumb”</a> GitHub repo (feel free to try them out by installing them with <code>devtools::install_github("isteves/plumbplumb")</code>). As with data wrangling code, I drew inspiration from code examples and vignettes, and refined and fleshed-out my functions as I used them.</p>
+<p>In the end, I’d touched on many areas of R that were new to me–plumber APIs, controlling with the RStudio IDE with code, package states, and more. Who knew all this was possible in R?!</p>
+<p>Merry Christmas and happy holidays, y’all!</p>
+<p><img src="https://media.giphy.com/media/JJt9Kx3lVCMlG/giphy.gif" /></p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>This process is also called "how to draw the rest of the f*cking owl": <a href="https://twitter.com/jennybryan/status/714673610695262211" class="uri">https://twitter.com/jennybryan/status/714673610695262211</a>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>I typically use the terminal to deal with tricky git issues or to open the project folder in a new window with command, <code>open .</code>. Occasionally–like in this example–I use it to start up a new R process by typing <code>R</code> and hitting return.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>To learn more about package states, check out <a href="https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/">this blogpost</a> by Jeff Allen, the Advanced R <a href="http://adv-r.had.co.nz/Environments.html#explicit-envs">Environments</a> chapter, or a real-life example in the <a href="https://github.com/tidyverse/googledrive/blob/master/R/aaa.R">googledrive package</a>.<a href="#fnref3" class="footnote-back">↩</a></p></li>
+</ol>
+</div>
