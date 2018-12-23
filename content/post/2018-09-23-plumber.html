@@ -3,24 +3,12 @@ title: Iterative testing with plumber
 author: Irene Steves
 date: '2018-12-23'
 draft: false
-output:
-  blogdown::html_page:
-    toc: true
-    toc_depth: 3
 slug: iterative-testing-plumber
 categories: []
 tags: []
 ---
 
 
-<div id="TOC">
-<ul>
-<li><a href="#the-coding-process">The coding process</a></li>
-<li><a href="#iteration-in-plumber">Iteration in plumber</a></li>
-<li><a href="#function-evolution">Function evolution</a></li>
-<li><a href="#conclusion">Conclusion</a></li>
-</ul>
-</div>
 
 <p>This summer, I fiddled around with <code>plumber</code>, an R package for creating your very own web API. I got my start with Jeff Allen’s <a href="https://resources.rstudio.com/webinars/plumber-api-final">webinar</a>, “Plumbing APIs with plumber” (<a href="https://github.com/rstudio/webinars/tree/master/60-plumber">slides here</a>). I later dug into the topic some more using the <a href="https://www.rplumber.io/docs/index.html">plumber bookdown</a>, along with a lot of trial and error.</p>
 <p>In this blogpost, I’ll highlight how I gradually improved on my plumber building/testing workflow and eventually automated my testing steps.</p>
@@ -117,9 +105,9 @@ kill_plumber &lt;- function() {
 </div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
-<p>Over time, my code evolved into the functions found on my <a href="https://github.com/isteves/plumbplumb">“plumbplumb”</a> GitHub repo (feel free to try them out by installing them with <code>devtools::install_github("isteves/plumbplumb")</code>). As with data wrangling code, I drew inspiration from code examples and vignettes, and refined and fleshed-out my functions as I used them.</p>
+<p>Over time, my code evolved into the functions found on my <a href="https://github.com/isteves/plumbplumb">“plumbplumb”</a> GitHub repo (feel free to try them out by installing them with <code>devtools::install_github("isteves/plumbplumb")</code>. I also include more details about how to use them in your own iterative API-building/testing workflow). As with data wrangling code, I drew inspiration from code examples and vignettes, and refined and fleshed-out my functions as I used them.</p>
 <p>In the end, I’d touched on many areas of R that were new to me–plumber APIs, controlling with the RStudio IDE with code, package states, and more. Who knew all this was possible in R?!</p>
-<p>Merry Christmas and happy holidays, y’all!</p>
+<p>With that, Merry Christmas and happy holidays, y’all!</p>
 <p><img src="https://media.giphy.com/media/JJt9Kx3lVCMlG/giphy.gif" /></p>
 </div>
 <div class="footnotes">

@@ -3,10 +3,6 @@ title: Iterative testing with plumber
 author: Irene Steves
 date: '2018-12-23'
 draft: false
-output:
-  blogdown::html_page:
-    toc: true
-    toc_depth: 3
 slug: iterative-testing-plumber
 categories: []
 tags: []
@@ -136,10 +132,10 @@ check_output <- function(trml) {
 
 ## Conclusion
 
-Over time, my code evolved into the functions found on my ["plumbplumb"](https://github.com/isteves/plumbplumb) GitHub repo (feel free to try them out by installing them with `devtools::install_github("isteves/plumbplumb")`). As with data wrangling code, I drew inspiration from code examples and vignettes, and refined and fleshed-out my functions as I used them. 
+Over time, my code evolved into the functions found on my ["plumbplumb"](https://github.com/isteves/plumbplumb) GitHub repo (feel free to try them out by installing them with `devtools::install_github("isteves/plumbplumb")`. I also include more details about how to use them in your own iterative API-building/testing workflow). As with data wrangling code, I drew inspiration from code examples and vignettes, and refined and fleshed-out my functions as I used them. 
 
 In the end, I'd touched on many areas of R that were new to me--plumber APIs, controlling with the RStudio IDE with code, package states, and more. Who knew all this was possible in R?!
 
-Merry Christmas and happy holidays, y'all!
+With that, Merry Christmas and happy holidays, y'all!
 
 ![](https://media.giphy.com/media/JJt9Kx3lVCMlG/giphy.gif)
