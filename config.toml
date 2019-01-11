@@ -9,7 +9,7 @@ enableEmoji = true
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 # Disqus Username
-# disqusShortname = "disqus_shortname"
+disqusShortname = "i_steves"
 
 # Google Analytics UA number
 googleAnalytics = "UA-122308493-1"
