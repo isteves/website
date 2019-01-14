@@ -75,7 +75,7 @@ Last 13 lines of output:
 <h3>Internet solutions</h3>
 <p>In my meanderings through GitHub issues and StackOverflow, I came across some other solutions to this problem:</p>
 <ul>
-<li>In <a href="https://github.com/r-lib/testthat/issues/86">this</a> GitHub issue, <a href="https://github.com/lhsego">lhsego</a> writes: “Simply add <code>Sys.setenv(&quot;R_TESTS&quot; = &quot;&quot;)</code> as the first line in tests/testthat.R”<br />
+<li>In <a href="https://github.com/r-lib/testthat/issues/86">this</a> GitHub issue, <a href="https://github.com/lhsego">lhsego</a> writes: “Simply add <code>Sys.setenv("R_TESTS" = "")</code> as the first line in tests/testthat.R”<br />
 </li>
 <li>In the same issue, <a href="https://github.com/espinielli">espinielli</a> writes: “In my particular case, the discrepancy I got between <code>devtools::test()</code> and <code>devtools::check()</code> was due to having the definition of a new unit in a .R file rather than inside <code>.onLoad()</code> (and removing it in <code>.onUnload()</code>).”</li>
 <li>On StackOverflow, <a href="https://stackoverflow.com/questions/42272119/r-cmd-check-fails-devtoolstest-works-fine">wligtenberg</a> ended up self-solving:
