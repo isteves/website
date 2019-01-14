@@ -9,6 +9,6 @@ This summer I was an intern at [RStudio](https://www.rstudio.com/), where I work
 
 Before diving into data science, I worked on a number of conservation field projects in California, Nevada, and Florida. When I'm not programming in R, I enjoy reliving my field days by identifying local plants and wildlife. Most recently, I've been obsessed with tidepools and California wildflowers. 
 
-**I'm looking for a full time position in R programming/data science (remote or Tel-Aviv based) to start fall/winter 2018-19.** If you have any leads for me, or would simply like to chat, my line is open! Contact me through twitter or at irene[DOT]steves[AT]gmail[DOT]com.
+**I'm looking for a full time position in R programming/data science (remote or Tel-Aviv based) to start winter/spring 2019.** If you have any leads for me, or would simply like to chat, my line is open! Contact me through twitter or at irene[DOT]steves[AT]gmail[DOT]com.
 
 ![](/wild.jpg)
