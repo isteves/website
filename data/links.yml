@@ -1,3 +1,9 @@
+95_rstudioconf-2019:
+  title: Teaching data science with puzzles
+  link: http://bit.ly/ds-puzzles
+  avatar: /rstudioconf19.png
+  description: rstudio::conf, January 2019
+
 96_rladies-paris:
   title: A summer of puzzle-making
   link: https://isteves.github.io/paris/rladies.html
