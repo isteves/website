@@ -5,6 +5,10 @@ date: '2019-01-19'
 slug: encoding-in-r
 categories: []
 tags: []
+draft: true
+output: 
+  html_document: 
+    keep_md: yes
 ---
 
 Every once in a while I complain on Twitter when I try to mix non-English letters with R...
