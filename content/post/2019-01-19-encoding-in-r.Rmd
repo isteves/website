@@ -6,9 +6,6 @@ slug: encoding-in-r
 categories: []
 tags: []
 draft: true
-output: 
-  html_document: 
-    keep_md: yes
 ---
 
 Every once in a while I complain on Twitter when I try to mix non-English letters with R...
@@ -17,13 +14,17 @@ Every once in a while I complain on Twitter when I try to mix non-English letter
 blogdown::shortcode('tweet', '1055115733624066049')
 ```
 
-I am certainly not the first person to be frustrated by this, though I am (maybe _too_) hopeful that I'm one of the last. We live in the age of vacuum bots and 3D-printing, so what makes multi-language support so complicated? 
+I am certainly not the first person to be frustrated by encoding issues, though I am (maybe _too_) hopeful that I'll be one of the last. We live in the age of vacuum bots and 3D-printing, so what makes multi-language support so complicated? 
 
-Once upon a time, computer scientists needed a way to store characters as bits (1's and 0's). So, they came up with ~~a system~~ several systems. In the early 90's, some developers proposed UTF-8, a system that struck a balance between storage and support for many character sets (alphabets/characters in different languages). Unfortunately, the rise of UTF-8 occurred only after the establishment of core Windows systems.[^1] To this day, Windows does not yet have full UTF-8 support, although Linux-based and web systems have long since switched over. Instead, Windows systems have encodings for different language families that often do not align with UTF-8.
+**Warning:** _I have no solutions in this blogpost._ I've simply amassed my encoding knowledge (mostly from GitHub issues and from explanations/demos at the [Tidyverse Developer Day](https://github.com/tidyverse/dev-day-2019)) into a single blogpost. 
+
+## A history lesson
+
+Once upon a time, computer scientists needed a way to store characters as bits (1's and 0's). So, they came up with ~~a system~~ several systems. In the early 90's, some developers proposed UTF-8, a system that struck a balance between storage and support for many character sets (alphabets/characters in different languages). Unfortunately, the rise of UTF-8 occurred only after the establishment of core Windows systems, which were based on a different unicode system.[^1] To this day, Windows does not yet have full UTF-8 support, although Linux-based and web systems have long since hopped on the UTF-8 train. 
 
 [^1]: Check out a fuller history of UTF-8/encoding in this blogpost:  [Unicode, UTF8 & Character Sets: The Ultimate Guide](https://www.smashingmagazine.com/2012/06/all-about-unicode-utf8-character-sets/)
 
-Encodings in R may not have been so bad had the default encoding in base R not been `native.enc`. Rather than forcing UTF-8 on its users, many base R functions translate inputs into the native encoding. This means that any characters that cannot be represented in the computer's native encoding become garbled. If you only ever use English, you probably rarely feel this. For anyone who uses multiple languages (and yes, [emojis](https://github.com/hadley/emo/issues/7) count), those who do not just give up and switch to English quickly realize that encoding bugs are--[as Joshua Goldberg put it](https://yihui.name/en/2018/11/biggest-regret-knitr/)--"quite annoying and a time sink with little value gained after you make it out alive." 
+Encodings in R may not have been so bad had the default encoding in base R not been `native.enc`. Rather than forcing UTF-8 on its users, many base R functions translate inputs into the native encoding, whether you ask it to or not. This means that any characters that cannot be represented in the computer's native encoding become **garbled**. Those who use multiple languages (and yes, [emojis](https://github.com/hadley/emo/issues/7) count) quickly find that  encoding bugs are--[as Joshua Goldberg put it](https://yihui.name/en/2018/11/biggest-regret-knitr/)--"quite annoying and a time sink with little value gained after you make it out alive." 
 
 # RStudio is HTML
 
@@ -37,9 +38,9 @@ Okay, so if RStudio runs in HTML and can specify UTF-8, why do we still run into
 
 ## Reading, wRiting, and pRogramming
 
-R and RStudio do not exist in isolation. Much of the time, we use it to read in files, write to new files, or do various kinds of programmatic conversions. 
+R and RStudio do not exist in isolation. Much of the time, we use it to read in files, write to new files, or do various programmatic conversions. 
 
-Take this simple example. We want to save a dataframe that includes non-English characters. `write.csv()` takes the system's native encoding by default, whereas `write_csv()` supports only UTF-8.
+Take this simple example. We want to save a dataframe that includes non-English characters. The function, `write.csv()`, takes the system's native encoding by default, whereas `write_csv()` supports only UTF-8.
 
 ```{r warning = FALSE}
 library(readr)
@@ -49,7 +50,7 @@ write.csv(df, "native.csv", row.names = FALSE)
 write_csv(df, "utf8.csv")
 ```
 
-Things look fine when we use the corresponding `read` functions on the files, but if we _switch them around_, we run into problems:
+Everything looks fine when we use the corresponding `read` functions on the files, but if we _switch them around_, we run into problems:
 
 ```{r}
 read.csv("utf8.csv")
@@ -60,20 +61,20 @@ We can work around these problems using the `fileEncoding` parameter in `read.cs
 
 [^3]: For an in-depth explanation of what read/write functions do in R, take a look at Kevin Ushey's excellent post on [String encoding in R](http://kevinushey.github.io/blog/2018/02/21/string-encoding-and-r/).
 
-However, some conversion processes rely on base-R commands that default to native encodings or translate to/from native encodings, resulting in "forced round-trips." Often, there is [no workaround](https://github.com/r-lib/evaluate/issues/59) unless you [dig into C](http://r.789695.n4.nabble.com/source-parse-and-foreign-UTF-8-characters-td4733523.html). Many rendering functions, such as `rmarkdown::render()` or `reprex::reprex()`, get stuck because of this combination of base R defaults and lack of Windows UTF-8 support.
+However, some conversion processes rely on base-R commands that translate to/from native encodings, resulting in "forced round-trips." Often, there is [no workaround](https://github.com/r-lib/evaluate/issues/59) unless you [dig into C](http://r.789695.n4.nabble.com/source-parse-and-foreign-UTF-8-characters-td4733523.html). Many rendering functions, such as `rmarkdown::render()` or `reprex::reprex()`, get stuck because of this combination of base R defaults and lack of Windows UTF-8 support.
 
 In fact, [many](https://github.com/yihui/knitr/issues/1506), [many](https://community.rstudio.com/t/problem-rendering-foreign-languages-in-rmd/17931/6) encoding issues ultimately drill down to the same few problematic base R functions, which include `sink()`, `source()`, `writeLines()`,[^2] and `format()`.
 
-[^2]: The `writeLines()` function does, in fact, work if you supply the `useBytes = TRUE` argument, but [it is a hack](https://bugs.r-project.org/bugzilla/show_bug.cgi?id=17503).
+[^2]: The `writeLines()` function does, in fact, work if you supply the `useBytes = TRUE` argument, but [it is a hack](https://bugs.r-project.org/bugzilla/show_bug.cgi?id=17503) that [`xfun::write_utf8()`](https://github.com/yihui/xfun/blob/5ac27093c7abe1fe5abb1de84734fdd0d083ba49/R/io.R#L29) exploits to alleviate your encoding headaches.
 
-Beyond functions, packages/CRAN have a few extra sets of restrictions. Special (non-English) characters are not allowed in package names, nor do they always display properly in search results. Take a look at Colin Fay's [proustr](https://github.com/ColinFay/proustr) package documentation, for example. The help table of contents is garbled, but the help pages themselves are mostly fine.
+Beyond functions, packages have a few extra sets of restrictions. Special (non-English) characters are not allowed in package names, nor do they always display properly in search results. Take a look at Colin Fay's [proustr](https://github.com/ColinFay/proustr) package documentation, for example. The help table of contents is garbled, but the help pages themselves are mostly fine.
 
 ![](https://github.com/isteves/website/blob/master/static/proustr-help1.png?raw=true)  
 ![](https://github.com/isteves/website/blob/master/static/proustr-help2.png?raw=true)
 
 ## Enter right-to-left (RTL) languages
 
-Things sometimes get trickier when you work with right-to-left (RTL) languages. By RTL, I mean that words and sentences within the language are written from right to left, but numbers or URL's or code or file names or whatever else are _often still left-to-right_ (or in English characters). Fortunately, there are [standards](https://www.w3.org/International/questions/qa-bidi-unicode-controls) for bidirectional, or "BiDi", text. In fact, there are even UTF-8 codes for defining text directions that:
+Things sometimes get trickier when you work with right-to-left (RTL) languages. By RTL, I mean that _most_ of the language is written from right to left, but numbers or URL's or code or whatever else are _often still left-to-right_ (or in English characters). Fortunately, there are [standards](https://www.w3.org/International/questions/qa-bidi-unicode-controls) for bidirectional, or "BiDi", text. In fact, there are even UTF-8 codes for defining text directions that:
 
 - use "isolates" or "embeddings" to set a base direction and let the BiDi algorithm take it from there
 - automatically determine text direction according to the first strongly-typed character (e.g. "a" or "א" but not "!")
@@ -89,9 +90,17 @@ These rules also bleed into data frames and the like. In some ways, the followin
 
 ![](https://github.com/isteves/website/blob/master/static/tibble-flip.png?raw=true)
 
-As a non-native RTL-er, these issues are a source of frustration but also great fascination for me. I encourage those more fluent in RTL languages than I to weigh in on issues related to the [IDE](https://github.com/rstudio/rstudio/issues/3808), [plotting](https://github.com/tidyverse/ggplot2/pull/2817), and elsewhere. If you need guidance on producing a minimal reproducible example of your problem, check out the [reprex](https://reprex.tidyverse.org/) package or Yihui Xie's [Minimal Reproducible Example Paradox](https://yihui.name/en/2017/09/the-minimal-reprex-paradox/) blogpost.
+As a non-native RTL-er, these issues are a source of frustration but also great fascination for me. I encourage those of you more fluent in RTL languages than I to weigh in on issues related to the [IDE](https://github.com/rstudio/rstudio/issues/3808), [plotting](https://github.com/tidyverse/ggplot2/pull/2817), and elsewhere. If you need guidance on producing a minimal reproducible example of your problem, check out the [reprex](https://reprex.tidyverse.org/) package or Yihui Xie's [Minimal Reproducible Example Paradox](https://yihui.name/en/2017/09/the-minimal-reprex-paradox/) blogpost.
 
-## Tidyverse Developer Day
+## A New Hope
 
-I may not have managed any PR's at the [Tidyverse Developer Day](https://github.com/tidyverse/dev-day-2019) after the rstudio::conf this year, but I had the opportunity to connect with several patient and kind encoding pros, including [Colin Fay](https://twitter.com/_ColinFay), [Christophe Dervieux](https://twitter.com/chrisderv), [Yoni Sidi](https://twitter.com/yoniceedee), and [Kirill Müller](https://twitter.com/krlmlr). They gave me the motivation to read up on encoding yet again and assemble my thoughts and learnings here in this post. Big thanks to all of them and the Tidyverse Team for organizing the Dev Day!
+![](https://github.com/isteves/website/blob/master/static/windows-utf8.PNG?raw=true)
+
+There is beta UTF-8 support on Windows! Does this solve all my problems? No, not yet. 
+
+However, UTF-8 efforts from both the Windows and R world (e.g. [utf8](https://github.com/patperry/r-utf8)) are making progress in this domain. In the mean time, the rest of us can continue to file issues, make PRs, and avoid base R functions that ignore our wish for a UTF-8 world.
+
+## Thanks
+
+I may not have managed any PR's at the [Tidyverse Developer Day](https://github.com/tidyverse/dev-day-2019) after the rstudio::conf this year, but I had the opportunity to connect with several patient and kind encoding pros, including [Colin Fay](https://twitter.com/_ColinFay), [Christophe Dervieux](https://twitter.com/chrisderv), [Yoni Sidi](https://twitter.com/yoniceedee) (extra thanks to Yoni for reviewing my draft of this post!), and [Kirill Müller](https://twitter.com/krlmlr). They gave me the motivation to read up on encoding yet again and assemble my thoughts and learnings here in this post. 
 
