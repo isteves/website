@@ -1,20 +1,18 @@
 ---
 title: Encoding in R
 author: Irene Steves
-date: '2019-01-19'
+date: '2019-03-16'
 slug: encoding-in-r
 categories: []
 tags: []
-draft: true
+draft: false
 ---
 
-Every once in a while I complain on Twitter when I try to mix non-English letters with R...
+Every once in a while I complain on Twitter when I try to mix non-English letters with R. I am certainly not the first person to be frustrated by encoding issues, though I am (maybe _too_) hopeful that the problems won't last for much longer. We live in the age of vacuum bots and 3D-printing, so what makes multi-language support so complicated? 
 
 ```{r echo = FALSE}
 blogdown::shortcode('tweet', '1055115733624066049')
 ```
-
-I am certainly not the first person to be frustrated by encoding issues, though I am (maybe _too_) hopeful that I'll be one of the last. We live in the age of vacuum bots and 3D-printing, so what makes multi-language support so complicated? 
 
 **Warning:** _I have no solutions in this blogpost._ I've simply amassed my encoding knowledge (mostly from GitHub issues and from explanations/demos at the [Tidyverse Developer Day](https://github.com/tidyverse/dev-day-2019)) into a single blogpost. 
 
@@ -86,7 +84,7 @@ If you're like me, reading through these guidelines the first time around doesn'
 
 There's a lot going on there, but it becomes clear pretty quickly that even without using English, the combination of Hebrew letters, numbers, and punctuation requires a set of rules for sensible display.
 
-These rules also bleed into data frames and the like. In some ways, the following [bug](https://github.com/tidyverse/tibble/issues/433) makes sense. After all, if everything was in Hebrew, you'd want columns to be displayed RTL. It's just that when you have a mix, it becomes non-sensical. 
+These rules also bleed into data frames and the like. In some ways, the following [bug](https://github.com/tidyverse/tibble/issues/433) makes sense. After all, if everything was in Hebrew, you'd want columns to be displayed RTL. 
 
 ![](https://github.com/isteves/website/blob/master/static/tibble-flip.png?raw=true)
 
