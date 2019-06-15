@@ -1,0 +1,94 @@
+---
+title: Who you gonna call? R processes!
+author: Irene Steves
+date: '2019-06-15'
+slug: callr
+categories: []
+tags: []
+---
+
+
+
+<p>Aside from the workshops and talks at <a href="https://twitter.com/hashtag/rstudioconf?src=hash">#rstudioconf</a> back in January, I picked up many useful nuggets from the stream of conference tweets. I was particularly struck by this one:</p>
+{{% tweet "1086253815916126209" %}}
+<p>Not feeling the amazement? Okay, let me explain…</p>
+<p>Loyal readers may remember my <a href="https://irene.rbind.io/post/iterative-testing-plumber/">previous blogpost</a>, in which I described starting a new R process to run a plumber API for testing. To do so, I opened up a new RStudio terminal with <code>rstudioapi::terminalCreate()</code>, then sent it commands with <code>terminalSend()</code>. My commands sometimes “got lost” if I sent them too soon, so I forced my function to “nap” and try again until the commands were fully complete. A bit of a convoluted workaround, but it worked.</p>
+<p>The <code>callr</code> package, on the other hand, deals with R processes in a much more sophisticated way. The authors describe it this way:</p>
+<blockquote>
+<p>Call R from R: It is sometimes useful to perform a computation in a separate R process, without affecting the current R process. This package does exactly that.</p>
+</blockquote>
+<div id="the-goods" class="section level2">
+<h2>The goods</h2>
+<p>I was able to catch Gábor Csárdi, the creator and maintainer of the <code>callr</code> package, at the <a href="https://github.com/tidyverse/dev-day-2019">#TidyverseDevDay</a> for a live demo.</p>
+<p>Gábor showed me <code>r()</code>, which evaluates an expression in another R session, and then returns the output. The first argument is a function, and the second argument is a list of the arguments/parameters to pass into the function.</p>
+<pre class="r"><code>library(callr)
+r(function(i) 1 + i, list(i = 5))</code></pre>
+<pre><code>## [1] 6</code></pre>
+<p>Try running the code again and observe how it freezes up your R session for a moment before returning the answer <code>6</code>. It sends the call, then waits for the response and returns it to you.</p>
+<p>The <code>r_bg()</code> (background) function takes the same arguments, but once it sends your expression to the new R session, it stops immediately. You must retrieve the output yourself by using <code>$get_result()</code> on the R process object.</p>
+<pre class="r"><code>my_r_process &lt;- r_bg(function(i) 1 + i, list(i = 5))
+my_r_process$wait()
+my_r_process$get_result()</code></pre>
+<pre><code>## [1] 6</code></pre>
+<p>If you try to <code>get_result()</code> right away, you get an error (though you may not notice if you run these lines interactively one-by-one).</p>
+<pre class="r"><code>my_r_process &lt;- r_bg(function(i) 1 + i, list(i = 5))
+my_r_process$get_result()</code></pre>
+<pre><code>## Error in rp_get_result(self, private): Still alive</code></pre>
+<p>Because of this behavior, <code>r_bg()</code> is much faster than <code>r()</code>. However, if you try to retrieve the output to soon, you may run into errors.</p>
+<pre class="r"><code>library(tictoc)
+tic(); r(function(i) 1 + i, list(i = 5)); toc()</code></pre>
+<pre><code>## [1] 6</code></pre>
+<pre><code>## 0.48 sec elapsed</code></pre>
+<pre class="r"><code>tic(); r_bg(function(i) 1 + i, list(i = 5)); toc()</code></pre>
+<pre><code>## PROCESS &#39;Rterm&#39;, running, pid 7276.</code></pre>
+<pre><code>## 0.12 sec elapsed</code></pre>
+<p>For code that takes a while to run, the <a href="https://www.youtube.com/watch?v=biIRlcQqmOc">“notorious”</a> <code>r_bg()</code> is a clear winner–it keeps your console free to use while working hard on your behalf in the background.</p>
+</div>
+<div id="mixing-it-up-with-r6" class="section level2">
+<h2>Mixing it up with R6</h2>
+<p>You can browse through the available functions if you type <code>callr::</code> (hit <code>&lt;TAB&gt;</code> if nothing shows up automatically). You may notice that some of the options are not functions at all, but rather <em>R6 class generators</em>.</p>
+<pre class="r"><code>class(callr::r_process)</code></pre>
+<pre><code>## [1] &quot;R6ClassGenerator&quot;</code></pre>
+<p>What in the world is R6?<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> Unlike regular R objects, R6 objects are <em>mutable</em>. That is, you can change them without having to reassign the changed version to the old variable name. This sort of functionality is particularly well-suited to <em>processes</em>.</p>
+<p>In pseudo-code, it goes something like this:</p>
+<pre class="r"><code># &quot;normal&quot; R - variables don&#39;t change unless they are reassigned
+my_num &lt;- 7
+my_num &lt;- multiply_three(my_num)
+my_num # becomes 21 because it has been re-assigned</code></pre>
+<p>versus</p>
+<pre class="r"><code># the world of R6
+my_num &lt;- MyR6Class$new(7)
+my_num$multiply_three() 
+my_num # magically becomes 21</code></pre>
+<p>Those of you familiar with Python or other programming languages may already have some intuition for mutable objects.</p>
+</div>
+<div id="process-versus-session" class="section level2">
+<h2>Process versus session</h2>
+<p>Among the R6 classes in the package are <code>r_process</code> and <code>r_session</code>. An <code>r_process</code> starts in the background, evaluates an R function call, and then <em>quits</em>.</p>
+<pre class="r"><code>rp &lt;- r_process$new(r_process_options(func = function(i) i + 1,
+                                      args = list(i = 2)))
+rp$wait() # if we call get_result too soon, we get an error
+rp$get_result()</code></pre>
+<pre><code>## [1] 3</code></pre>
+<pre class="r"><code>rp</code></pre>
+<pre><code>## PROCESS &#39;Rterm&#39;, finished.</code></pre>
+<p>On the other hand, an <code>r_session</code> continues to run in the background until it is explicitly closed.</p>
+<pre class="r"><code>rs &lt;- r_session$new()
+rs$run(function(i) i + 1, args = list(i = 2))</code></pre>
+<pre><code>## [1] 3</code></pre>
+<pre class="r"><code>rs$run(function() paste(stringr::fruit[1:3], collapse = &quot; and &quot;))</code></pre>
+<pre><code>## [1] &quot;apple and apricot and avocado&quot;</code></pre>
+<pre class="r"><code>rs</code></pre>
+<pre><code>## R SESSION, alive, idle, pid 11176.</code></pre>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>R is a single-threaded language, meaning that it can only handle one thing at a time. We have ways of speeding things up with vectorization and parallelization, but <code>callr</code> provides us with even more flexibility. We can partition code into separate processes ourselves. Next time, instead of <code>source()</code>ing your script or–as in my previous case–opening up a new RStudio terminal, consider if it’s time to call up an R process.</p>
+<p><img src="https://github.com/isteves/website/blob/master/static/callr.png?raw=true" /></p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>For a full explanation of R6, take a look at <a href="https://adv-r.hadley.nz/r6.html">this chapter</a> in Advanced R.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+</ol>
+</div>
