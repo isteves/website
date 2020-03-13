@@ -6,7 +6,7 @@ slug: intro-to-igraph
 categories: []
 tags: []
 draft: false
-cover: /post/2020-01-21-intro-to-igraph_files/igraph-ve.png
+cover: /post/2020-01-21-intro-to-igraph_files/igraph-ve-terminology.png
 ---
 
 
@@ -18,8 +18,8 @@ cover: /post/2020-01-21-intro-to-igraph_files/igraph-ve.png
 <div id="balls-and-sticks" class="section level2">
 <h2>Balls and sticks</h2>
 <p>I think of network graphs as a bunch of balls and sticks, not unlike the magnetic building sticks my baby cousin plays with.</p>
-<p><img src="http://www.elongdi.net/wp-content/uploads/sites/2/2018/05/Stick-Building-Blocks-3.jpg" /></p>
-<p>Ignore the bottom right example and you’ll find stellar examples of network graphs. The graphs can come in different shapes and sizes, and even in a rainbow of colors.</p>
+<p><img src="https://images-na.ssl-images-amazon.com/images/I/71FIIqOiPDL._SX679_.jpg" /></p>
+<p>Ignore the top right example and you’ll find stellar examples of network graphs. The graphs can come in different shapes and sizes, and even in a rainbow of colors.</p>
 <p>In real networks, the silver balls above may also come in varied sizes or colors or shapes. Sometimes the sticks become arrows, or be fat or thin. Using the <em>official</em> terminology, these “balls” are called <strong>vertices</strong> or <strong>nodes</strong>, and the “sticks” are called <strong>edges</strong>. The vertices, edges, or graph as a whole may have additional characteristics, or <strong>attributes</strong>, that describe them, such as size or group. A graph containing edges of different thicknesses, for example, is a <strong>weighted</strong> graph.</p>
 <p>If we zoom in on a pair of vertices, we discover a bit more terminology. Edges are defined by the two vertices on each <strong>end</strong> of the edge. In a <strong>directed</strong> edge (with an arrow / has a <em>direction</em>), the vertex at the “arrowhead” is the <strong>head</strong> and the “feathered” vertex is the <strong>tail</strong>.</p>
 <p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-ve-terminology.png" /></p>
@@ -43,15 +43,15 @@ E(macaque)[1]
 E(macaque)[&quot;V1|V2&quot;]</code></pre>
 <p>To remove or add vertices/edges to a graph, you can use your basic arithmetic operators. Subtracting is easy – just describe explicitly which vertices or edges you want to remove.</p>
 <pre class="r"><code>macaque - V(macaque)[1:42]</code></pre>
-<pre><code>## IGRAPH cc86a77 DN-- 3 4 -- 
+<pre><code>## IGRAPH 4df0eb2 DN-- 3 4 -- 
 ## + attr: Citation (g/c), Author (g/c), shape (v/c), name (v/c)
-## + edges from cc86a77 (vertex names):
+## + edges from 4df0eb2 (vertex names):
 ## [1] Id-&gt;35 Id-&gt;36 35-&gt;Id 36-&gt;Id</code></pre>
 <p>To add, you may need the <code>vertices()</code> or <code>edges()</code> functions. Note that edges can only connect <em>existing</em> vertices.</p>
 <pre class="r"><code>macaque - V(macaque)[1:42] + edges(&quot;Id&quot;,&quot;Id&quot;, &quot;Id&quot;,&quot;35&quot;) </code></pre>
-<pre><code>## IGRAPH 8445777 DN-- 3 6 -- 
+<pre><code>## IGRAPH 8980d8d DN-- 3 6 -- 
 ## + attr: Citation (g/c), Author (g/c), shape (v/c), name (v/c)
-## + edges from 8445777 (vertex names):
+## + edges from 8980d8d (vertex names):
 ## [1] Id-&gt;35 Id-&gt;36 35-&gt;Id 36-&gt;Id Id-&gt;Id Id-&gt;35</code></pre>
 <pre class="r"><code>macaque - V(macaque)[1:42] + edges(&quot;Id&quot;,&quot;a vertex that doesn&#39;t exist yet&quot;) </code></pre>
 <pre><code>## Error in as.igraph.vs(e1, toadd): Invalid vertex names</code></pre>
