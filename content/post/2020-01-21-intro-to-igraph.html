@@ -6,7 +6,7 @@ slug: intro-to-igraph
 categories: []
 tags: []
 draft: false
-cover: /post/2020-01-21-intro-to-igraph_files/igraph-ve-terminology.png
+cover: /post/2020-01-21-intro-to-igraph_files/igraph-small.png
 ---
 
 
@@ -43,15 +43,15 @@ E(macaque)[1]
 E(macaque)[&quot;V1|V2&quot;]</code></pre>
 <p>To remove or add vertices/edges to a graph, you can use your basic arithmetic operators. Subtracting is easy – just describe explicitly which vertices or edges you want to remove.</p>
 <pre class="r"><code>macaque - V(macaque)[1:42]</code></pre>
-<pre><code>## IGRAPH 4df0eb2 DN-- 3 4 -- 
+<pre><code>## IGRAPH 5db20f6 DN-- 3 4 -- 
 ## + attr: Citation (g/c), Author (g/c), shape (v/c), name (v/c)
-## + edges from 4df0eb2 (vertex names):
+## + edges from 5db20f6 (vertex names):
 ## [1] Id-&gt;35 Id-&gt;36 35-&gt;Id 36-&gt;Id</code></pre>
 <p>To add, you may need the <code>vertices()</code> or <code>edges()</code> functions. Note that edges can only connect <em>existing</em> vertices.</p>
 <pre class="r"><code>macaque - V(macaque)[1:42] + edges(&quot;Id&quot;,&quot;Id&quot;, &quot;Id&quot;,&quot;35&quot;) </code></pre>
-<pre><code>## IGRAPH 8980d8d DN-- 3 6 -- 
+<pre><code>## IGRAPH 968a671 DN-- 3 6 -- 
 ## + attr: Citation (g/c), Author (g/c), shape (v/c), name (v/c)
-## + edges from 8980d8d (vertex names):
+## + edges from 968a671 (vertex names):
 ## [1] Id-&gt;35 Id-&gt;36 35-&gt;Id 36-&gt;Id Id-&gt;Id Id-&gt;35</code></pre>
 <pre class="r"><code>macaque - V(macaque)[1:42] + edges(&quot;Id&quot;,&quot;a vertex that doesn&#39;t exist yet&quot;) </code></pre>
 <pre><code>## Error in as.igraph.vs(e1, toadd): Invalid vertex names</code></pre>
