@@ -27,9 +27,9 @@ Along the way, I took Keynote-notes -- annotating and diagramming to help me rem
 
 I think of network graphs as a bunch of balls and sticks, not unlike the magnetic building sticks my baby cousin plays with. 
 
-![](http://www.elongdi.net/wp-content/uploads/sites/2/2018/05/Stick-Building-Blocks-3.jpg)
+![](https://images-na.ssl-images-amazon.com/images/I/71FIIqOiPDL._SX679_.jpg)
 
-Ignore the bottom right example and you'll find stellar examples of network graphs.  The graphs can come in different shapes and sizes, and even in a rainbow of colors.
+Ignore the top right example and you'll find stellar examples of network graphs.  The graphs can come in different shapes and sizes, and even in a rainbow of colors.
 
 In real networks, the silver balls above may also come in varied sizes or colors or shapes. Sometimes the sticks become arrows, or be fat or thin. Using the _official_ terminology, these "balls" are called **vertices** or **nodes**, and the "sticks" are called **edges**. The vertices, edges, or graph as a whole may have additional characteristics, or **attributes**, that describe them, such as size or group. A graph containing edges of different thicknesses, for example, is a **weighted** graph.
 
