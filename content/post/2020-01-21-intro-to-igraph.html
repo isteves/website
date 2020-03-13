@@ -1,0 +1,80 @@
+---
+title: Visual notes - intro to igraph
+author: Irene Steves
+date: '2020-03-13'
+slug: intro-to-igraph
+categories: []
+tags: []
+draft: false
+cover: /post/2020-01-21-intro-to-igraph_files/igraph-ve.png
+---
+
+
+
+<p>I’ve worked with <code>igraph</code> a few times now, but I usually dive straight into what I want to do and bash my way through. Recently I decided to review the fundamentals…annotating and diagramming to help me remember the terminology and concepts. This post is a collection of those visual notes.</p>
+<!--more-->
+<p>I’ve worked with <code>igraph</code> a few times now, but I usually dive straight into what I want to do and bash my way through. Recently I decided to review the fundamentals as written in the first chapter of this <a href="https://sites.fas.harvard.edu/~airoldi/pub/books/BookDraft-CsardiNepuszAiroldi2016.pdf">book draft</a> by Csardi, Nepusz, and Airoldi. I haven’t been able to track down the final version of the book, so let me know if you know where it is!</p>
+<p>Along the way, I took Keynote-notes – annotating and diagramming to help me remember the terminology and concepts. This post is a collection of those visual notes from chapters 1 &amp; 2.</p>
+<div id="balls-and-sticks" class="section level2">
+<h2>Balls and sticks</h2>
+<p>I think of network graphs as a bunch of balls and sticks, not unlike the magnetic building sticks my baby cousin plays with.</p>
+<p><img src="http://www.elongdi.net/wp-content/uploads/sites/2/2018/05/Stick-Building-Blocks-3.jpg" /></p>
+<p>Ignore the bottom right example and you’ll find stellar examples of network graphs. The graphs can come in different shapes and sizes, and even in a rainbow of colors.</p>
+<p>In real networks, the silver balls above may also come in varied sizes or colors or shapes. Sometimes the sticks become arrows, or be fat or thin. Using the <em>official</em> terminology, these “balls” are called <strong>vertices</strong> or <strong>nodes</strong>, and the “sticks” are called <strong>edges</strong>. The vertices, edges, or graph as a whole may have additional characteristics, or <strong>attributes</strong>, that describe them, such as size or group. A graph containing edges of different thicknesses, for example, is a <strong>weighted</strong> graph.</p>
+<p>If we zoom in on a pair of vertices, we discover a bit more terminology. Edges are defined by the two vertices on each <strong>end</strong> of the edge. In a <strong>directed</strong> edge (with an arrow / has a <em>direction</em>), the vertex at the “arrowhead” is the <strong>head</strong> and the “feathered” vertex is the <strong>tail</strong>.</p>
+<p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-ve-terminology.png" /></p>
+</div>
+<div id="the-igraph-class" class="section level2">
+<h2>The igraph class</h2>
+<p>All the information about a network (e.g. those magnetic structures above) can be stored in an <code>igraph</code> object. A graph (g) in the network context is the combination of vertices and edges that make up a network. This does <em>not</em> refer to an actual plot, although you can also easily <code>plot()</code> a graph. (Confusing, I know.)</p>
+<p>Seeing the output of the <code>igraph</code> object for the first time is a bit overwhelming, but this is what it is telling you:</p>
+<p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-class.png" /></p>
+<p><em>Note:</em> The book makes extensive use of the <code>igraphdata</code> package, which includes several example igraph objects, such as the dataset <code>macaque</code>, shown above. This makes it easy to explore <code>igraph</code> class objects without creating one yourself.</p>
+</div>
+<div id="vertices-and-edges" class="section level2">
+<h2>Vertices and edges</h2>
+<p>Once you have a graph object chances are, you’ll want to look at its parts and maybe modify it. The two basic parts of a graph are the vertices and edges, which you can extract with <code>V()</code> and <code>E()</code>.</p>
+<p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-ve.png" /></p>
+<p>You can specify specific vertices/edges using their position or name:</p>
+<pre class="r"><code>V(macaque)[1]
+V(macaque)[&quot;V1&quot;]
+
+E(macaque)[1]
+E(macaque)[&quot;V1|V2&quot;]</code></pre>
+<p>To remove or add vertices/edges to a graph, you can use your basic arithmetic operators. Subtracting is easy – just describe explicitly which vertices or edges you want to remove.</p>
+<pre class="r"><code>macaque - V(macaque)[1:42]</code></pre>
+<pre><code>## IGRAPH cc86a77 DN-- 3 4 -- 
+## + attr: Citation (g/c), Author (g/c), shape (v/c), name (v/c)
+## + edges from cc86a77 (vertex names):
+## [1] Id-&gt;35 Id-&gt;36 35-&gt;Id 36-&gt;Id</code></pre>
+<p>To add, you may need the <code>vertices()</code> or <code>edges()</code> functions. Note that edges can only connect <em>existing</em> vertices.</p>
+<pre class="r"><code>macaque - V(macaque)[1:42] + edges(&quot;Id&quot;,&quot;Id&quot;, &quot;Id&quot;,&quot;35&quot;) </code></pre>
+<pre><code>## IGRAPH 8445777 DN-- 3 6 -- 
+## + attr: Citation (g/c), Author (g/c), shape (v/c), name (v/c)
+## + edges from 8445777 (vertex names):
+## [1] Id-&gt;35 Id-&gt;36 35-&gt;Id 36-&gt;Id Id-&gt;Id Id-&gt;35</code></pre>
+<pre class="r"><code>macaque - V(macaque)[1:42] + edges(&quot;Id&quot;,&quot;a vertex that doesn&#39;t exist yet&quot;) </code></pre>
+<pre><code>## Error in as.igraph.vs(e1, toadd): Invalid vertex names</code></pre>
+<p>Like in the examples above, a graph may contain edges that are <strong>self-loops</strong> – a vertex connected to itself – or <strong>multigraphs</strong> (a.k.a. duplicated edges). You may sometimes need to <strong>simplify()</strong> a graph to use certain clustering functions (such as <code>cluster_fast_greedy()</code>) or do other analyses. This can mean removing loops, removing duplicate edges, or combining the attributes of duplicate edges using a summary functions.</p>
+<p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-graph-types.png" /></p>
+</div>
+<div id="graph-bits-pieces" class="section level2">
+<h2>Graph bits &amp; pieces</h2>
+<p>Imagine standing on a vertex and starting to walk down an edge, continuing onto connected vertices and edges. The edges that you walk on make up what is called–surprise, surprise–a <strong>path</strong>. Often, network problems involve finding the <em>shortest path(s)</em>, or <strong>geodesic</strong>, between two points (think flight connections, for example).</p>
+<p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-path.png" /></p>
+<p>To extract a path from an igraph object, you can specify either the the vertices or edges that make up the path, as seen on the right above.</p>
+<p><strong>Degree</strong> is an attribute of a vertex that describes the number of adjacent edges. The shortest loop that can be made with the edges is the <strong>diameter</strong> of the graph.</p>
+<p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-degree-diameter.png" /></p>
+<p>When all vertices of a graph are joined to each other via edges, a graph is considered to be <strong>connected</strong>. Directed graphs can be <strong>weakly connected</strong> when vertices are connected in one direction or <strong>strongly connected</strong> when vertices are connected bidirectionally. Graphs where vertices are not all joined are <strong>unconnected</strong>, with <strong>components</strong> that are connected.</p>
+<p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-connectedness.png" /></p>
+<p>Some types of graphs come with special names. <strong>Biconnected</strong> graphs include at least 2 paths between each pair of vertices. A <strong>directed acyclic graph</strong> (DAG) is a graph without (“a-”) cyclic paths. That is, no matter what vertex you start on, any path will lead to one of the ending vertices without any repeat vertices.</p>
+<p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-biconnected-dag.png" /></p>
+<p>Sometimes, you may be interested in just a portion of the graph, or <strong>subgraph</strong>. A graph that contains all the vertices <em>and</em> all the edges from the original graph is an <strong>induced subgraph</strong>.</p>
+<p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-subgraph.png" /></p>
+<p>Another way to zoom in on a large graph is via an <strong>ego network</strong>, where you focus on a specific vertex and its closest neighbors.</p>
+<p><img src="/post/2020-01-21-intro-to-igraph_files/igraph-ego.png" /></p>
+</div>
+<div id="thats-all-folks" class="section level2">
+<h2>That’s all folks!</h2>
+<p>There’s plenty more detail within the <a href="https://sites.fas.harvard.edu/~airoldi/pub/books/BookDraft-CsardiNepuszAiroldi2016.pdf">pdf book</a>, but the rest will need to wait until another time!</p>
+</div>
