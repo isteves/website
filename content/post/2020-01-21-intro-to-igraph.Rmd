@@ -6,7 +6,7 @@ slug: intro-to-igraph
 categories: []
 tags: []
 draft: false
-cover: /post/2020-01-21-intro-to-igraph_files/igraph-ve.png
+cover: /post/2020-01-21-intro-to-igraph_files/igraph-ve-terminology.png
 ---
 
 I've worked with `igraph` a few times now, but I usually dive straight into what I want to do and bash my way through. Recently I decided to review the fundamentals...annotating and diagramming to help me remember the terminology and concepts. This post is a collection of those visual notes.
