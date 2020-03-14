@@ -5,6 +5,7 @@ date: '2019-06-15'
 slug: callr
 categories: []
 tags: []
+cover: /callr-cover.png
 ---
 
 
@@ -38,10 +39,10 @@ my_r_process$get_result()</code></pre>
 <pre class="r"><code>library(tictoc)
 tic(); r(function(i) 1 + i, list(i = 5)); toc()</code></pre>
 <pre><code>## [1] 6</code></pre>
-<pre><code>## 0.48 sec elapsed</code></pre>
+<pre><code>## 0.244 sec elapsed</code></pre>
 <pre class="r"><code>tic(); r_bg(function(i) 1 + i, list(i = 5)); toc()</code></pre>
-<pre><code>## PROCESS &#39;Rterm&#39;, running, pid 7276.</code></pre>
-<pre><code>## 0.12 sec elapsed</code></pre>
+<pre><code>## PROCESS &#39;R&#39;, running, pid 82950.</code></pre>
+<pre><code>## 0.021 sec elapsed</code></pre>
 <p>For code that takes a while to run, the <a href="https://www.youtube.com/watch?v=biIRlcQqmOc">“notorious”</a> <code>r_bg()</code> is a clear winner–it keeps your console free to use while working hard on your behalf in the background.</p>
 </div>
 <div id="mixing-it-up-with-r6" class="section level2">
@@ -71,7 +72,7 @@ rp$wait() # if we call get_result too soon, we get an error
 rp$get_result()</code></pre>
 <pre><code>## [1] 3</code></pre>
 <pre class="r"><code>rp</code></pre>
-<pre><code>## PROCESS &#39;Rterm&#39;, finished.</code></pre>
+<pre><code>## PROCESS &#39;R&#39;, finished.</code></pre>
 <p>On the other hand, an <code>r_session</code> continues to run in the background until it is explicitly closed.</p>
 <pre class="r"><code>rs &lt;- r_session$new()
 rs$run(function(i) i + 1, args = list(i = 2))</code></pre>
@@ -79,7 +80,7 @@ rs$run(function(i) i + 1, args = list(i = 2))</code></pre>
 <pre class="r"><code>rs$run(function() paste(stringr::fruit[1:3], collapse = &quot; and &quot;))</code></pre>
 <pre><code>## [1] &quot;apple and apricot and avocado&quot;</code></pre>
 <pre class="r"><code>rs</code></pre>
-<pre><code>## R SESSION, alive, idle, pid 11176.</code></pre>
+<pre><code>## R SESSION, alive, idle, pid 82966.</code></pre>
 </div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>

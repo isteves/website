@@ -6,6 +6,7 @@ draft: false
 slug: iterative-testing-plumber
 categories: []
 tags: []
+cover: /plumbr-cover.png
 ---
 
 
@@ -22,7 +23,7 @@ tags: []
 </div>
 <div id="iteration-in-plumber" class="section level2">
 <h2>Iteration in plumber</h2>
-<p>Plumber comes bundled with the Swagger service, which provides an interactive interface for testing your API. When you run <code>plumber::plumb("my_plumber_file.R")</code>, you end up with a URL like <code>http://127.0.0.1:8484/__swagger__/</code>, which you can use to access the Swagger interface on any local browser. The interface allows you to play with variable values, execute your command, and view the response.</p>
+<p>Plumber comes bundled with the Swagger service, which provides an interactive interface for testing your API. When you run <code>plumber::plumb(&quot;my_plumber_file.R&quot;)</code>, you end up with a URL like <code>http://127.0.0.1:8484/__swagger__/</code>, which you can use to access the Swagger interface on any local browser. The interface allows you to play with variable values, execute your command, and view the response.</p>
 <p><img src="https://github.com/isteves/website/blob/master/static/swagger.png?raw=true" /></p>
 <p>However, when trying to fix a bug in your code, it becomes clear that checking every small change in your code via Swagger is inefficient. It means manually entering values for your arguments, pointy-clicking on execute, and visually checking the response. All the while, Swagger takes over your R process so you can’t run any other commands.</p>
 <p>After some weeks of awkward debugging, Jenny pointed out that I could use a separate R process to run the API locally <em>and</em> test it with code. This was a total game changer.</p>
@@ -105,7 +106,7 @@ kill_plumber &lt;- function() {
 </div>
 <div id="conclusion" class="section level2">
 <h2>Conclusion</h2>
-<p>Over time, my code evolved into the functions found on my <a href="https://github.com/isteves/plumbplumb">“plumbplumb”</a> GitHub repo (feel free to try them out by installing them with <code>devtools::install_github("isteves/plumbplumb")</code>. I also include more details about how to use them in your own iterative API-building/testing workflow). As with data wrangling code, I drew inspiration from code examples and vignettes, and refined and fleshed-out my functions as I used them.</p>
+<p>Over time, my code evolved into the functions found on my <a href="https://github.com/isteves/plumbplumb">“plumbplumb”</a> GitHub repo (feel free to try them out by installing them with <code>devtools::install_github(&quot;isteves/plumbplumb&quot;)</code>. I also include more details about how to use them in your own iterative API-building/testing workflow). As with data wrangling code, I drew inspiration from code examples and vignettes, and refined and fleshed-out my functions as I used them.</p>
 <p>In the end, I’d touched on many areas of R that were new to me–plumber APIs, controlling with the RStudio IDE with code, package states, and more. Who knew all this was possible in R?!</p>
 <p>With that, Merry Christmas and happy holidays, y’all!</p>
 <p><img src="https://media.giphy.com/media/JJt9Kx3lVCMlG/giphy.gif" /></p>
@@ -113,7 +114,7 @@ kill_plumber &lt;- function() {
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>This process is also called "how to draw the rest of the f*cking owl": <a href="https://twitter.com/jennybryan/status/714673610695262211" class="uri">https://twitter.com/jennybryan/status/714673610695262211</a>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn1"><p>This process is also called &quot;how to draw the rest of the f*cking owl&quot;: <a href="https://twitter.com/jennybryan/status/714673610695262211" class="uri">https://twitter.com/jennybryan/status/714673610695262211</a>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
 <li id="fn2"><p>I typically use the terminal to deal with tricky git issues or to open the project folder in a new window with command, <code>open .</code>. Occasionally–like in this example–I use it to start up a new R process by typing <code>R</code> and hitting return.<a href="#fnref2" class="footnote-back">↩</a></p></li>
 <li id="fn3"><p>To learn more about package states, check out <a href="https://trestletech.com/2013/04/package-wide-variablescache-in-r-package/">this blogpost</a> by Jeff Allen, the Advanced R <a href="http://adv-r.had.co.nz/Environments.html#explicit-envs">Environments</a> chapter, or a real-life example in the <a href="https://github.com/tidyverse/googledrive/blob/master/R/aaa.R">googledrive package</a>.<a href="#fnref3" class="footnote-back">↩</a></p></li>
 </ol>

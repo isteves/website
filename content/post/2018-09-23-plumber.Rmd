@@ -6,6 +6,7 @@ draft: false
 slug: iterative-testing-plumber
 categories: []
 tags: []
+cover: /plumbr-cover.png
 ---
 
 This summer, I fiddled around with `plumber`, an R package for creating your very own web API.  I got my start with Jeff Allen's [webinar](https://resources.rstudio.com/webinars/plumber-api-final), "Plumbing APIs with plumber" ([slides here](https://github.com/rstudio/webinars/tree/master/60-plumber)). I later dug into the topic some more using the [plumber bookdown](https://www.rplumber.io/docs/index.html), along with a lot of trial and error. 

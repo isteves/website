@@ -6,6 +6,7 @@ slug: encoding-in-r
 categories: []
 tags: []
 draft: false
+code: /encoding-cover.png
 ---
 
 
@@ -35,23 +36,23 @@ write.csv(df, &quot;native.csv&quot;, row.names = FALSE)
 write_csv(df, &quot;utf8.csv&quot;)</code></pre>
 <p>Everything looks fine when we use the corresponding <code>read</code> functions on the files, but if we <em>switch them around</em>, we run into problems:</p>
 <pre class="r"><code>read.csv(&quot;utf8.csv&quot;)</code></pre>
-<pre><code>##                                       food
-## 1                                   CrÃªpe
-## 2                                 SpÃ¤tzle
-## 3                             SmÃ¸rrebrÃ¸d
-## 4 &lt;U+05D7&gt;&lt;U+05D5&gt;&lt;U+05DE&gt;&lt;U+05D5&gt;&lt;U+05E1&gt;</code></pre>
+<pre><code>##         food
+## 1      Crêpe
+## 2    Spätzle
+## 3 Smørrebrød
+## 4      חומוס</code></pre>
 <pre class="r"><code>read_csv(&quot;native.csv&quot;)</code></pre>
 <pre><code>## Parsed with column specification:
 ## cols(
 ##   food = col_character()
 ## )</code></pre>
 <pre><code>## # A tibble: 4 x 1
-##   food                                    
-##   &lt;chr&gt;                                   
-## 1 &quot;Cr\xeape&quot;                              
-## 2 &quot;Sp\xe4tzle&quot;                            
-## 3 &quot;Sm\xf8rrebr\xf8d&quot;                      
-## 4 &lt;U+05D7&gt;&lt;U+05D5&gt;&lt;U+05DE&gt;&lt;U+05D5&gt;&lt;U+05E1&gt;</code></pre>
+##   food      
+##   &lt;chr&gt;     
+## 1 Crêpe     
+## 2 Spätzle   
+## 3 Smørrebrød
+## 4 חומוס</code></pre>
 <p>We can work around these problems using the <code>fileEncoding</code> parameter in <code>read.csv()</code> or the <code>locale</code> parameter in <code>read_csv()</code>.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
 <p>However, some conversion processes rely on base-R commands that translate to/from native encodings, resulting in “forced round-trips.” Often, there is <a href="https://github.com/r-lib/evaluate/issues/59">no workaround</a> unless you <a href="http://r.789695.n4.nabble.com/source-parse-and-foreign-UTF-8-characters-td4733523.html">dig into C</a>. Many rendering functions, such as <code>rmarkdown::render()</code> or <code>reprex::reprex()</code>, get stuck because of this combination of base R defaults and lack of Windows UTF-8 support.</p>
 <p>In fact, <a href="https://github.com/yihui/knitr/issues/1506">many</a>, <a href="https://community.rstudio.com/t/problem-rendering-foreign-languages-in-rmd/17931/6">many</a> encoding issues ultimately drill down to the same few problematic base R functions, which include <code>sink()</code>, <code>source()</code>, <code>writeLines()</code>,<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> and <code>format()</code>.</p>
@@ -64,7 +65,7 @@ write_csv(df, &quot;utf8.csv&quot;)</code></pre>
 <p>Things sometimes get trickier when you work with right-to-left (RTL) languages. By RTL, I mean that <em>most</em> of the language is written from right to left, but numbers or URL’s or code or whatever else are <em>often still left-to-right</em> (or in English characters). Fortunately, there are <a href="https://www.w3.org/International/questions/qa-bidi-unicode-controls">standards</a> for bidirectional, or “BiDi”, text. In fact, there are even UTF-8 codes for defining text directions that:</p>
 <ul>
 <li>use “isolates” or “embeddings” to set a base direction and let the BiDi algorithm take it from there</li>
-<li>automatically determine text direction according to the first strongly-typed character (e.g. “a” or “א” but not “!”)</li>
+<li>automatically determine text direction according to the first strongly-typed character (e.g. “a” or “א” but not “!”)</li>
 <li>force a direction with “override” codes that ignore the BiDi algorithm</li>
 </ul>
 <p>If you’re like me, reading through these guidelines the first time around doesn’t make much sense, so let’s take a look at how Excel handles a few different scenarios:</p>
@@ -78,7 +79,7 @@ write_csv(df, &quot;utf8.csv&quot;)</code></pre>
 <h2>A New Hope</h2>
 <p><img src="https://github.com/isteves/website/blob/master/static/windows-utf8.PNG?raw=true" /></p>
 <p>There is beta UTF-8 support on Windows! Does this solve all my problems? No, not yet.</p>
-<p>However, UTF-8 efforts from both the Windows and R world (e.g. <a href="https://github.com/patperry/r-utf8">utf8</a>) are making progress in this domain. In the mean time, the rest of us can continue to file issues, make PRs, and avoid base R functions that ignore our wish for a UTF-8 world.</p>
+<p>However, UTF-8 efforts from both the Windows and R world (e.g. <a href="https://github.com/patperry/r-utf8">utf8</a>) are making progress in this domain. In the mean time, the rest of us can continue to file issues, make PRs, and avoid base R functions that ignore our wish for a UTF-8 world.</p>
 </div>
 <div id="thanks" class="section level2">
 <h2>Thanks</h2>

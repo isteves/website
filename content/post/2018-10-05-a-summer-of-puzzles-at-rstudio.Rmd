@@ -5,6 +5,7 @@ date: '2018-10-05'
 slug: summer-rstudio
 categories: []
 tags: []
+cover: /puzzle-cover.png
 ---
 
 This summer, I teamed up with Jenny Bryan to create a series of coding puzzles, which (fingers crossed!) will be released next spring.  It was exciting to start a project from the ground up, growing and shaping it over the 10-ish weeks of the internship.  

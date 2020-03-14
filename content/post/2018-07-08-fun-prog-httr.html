@@ -10,6 +10,7 @@ output:
   blogdown::html_page:
     toc: true
     toc_depth: 3
+cover: /post/2018-07-25-fun-prog-httr_files/fun-cover.png
 ---
 
 <script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
@@ -45,19 +46,19 @@ internet_thing &lt;- GET(&quot;https://cn.dataone.org/cn/v2/resolve/urn:uuid:9e1
 <pre class="r"><code>data &lt;- content(internet_thing)
 data[, 1:5] # showing just the first 5 columns</code></pre>
 <pre><code>## # A tibble: 84 x 5
-##    District.Name District.ID School.ID School.Name            Location    
-##    &lt;chr&gt;               &lt;int&gt;     &lt;int&gt; &lt;chr&gt;                  &lt;chr&gt;       
-##  1 Denali                  2     20010 Anderson School        Anderson    
-##  2 Denali                  2     20030 Cantwell School        Cantwell    
-##  3 Denali                  2     20040 Tri-Valley School      Healy       
-##  4 Denali                  2     28010 Denali Peak Program    Healy       
-##  5 Bering Strait           7     70010 Brevig Mission School  Brevig Miss~
-##  6 Bering Strait           7     70040 Aniguiin School        Elim        
-##  7 Bering Strait           7     70050 Little Diomede School  Diomede     
-##  8 Bering Strait           7     70060 Martin L. Olson School Golovin     
-##  9 Bering Strait           7     70070 Koyuk-Malimiut School  Koyuk       
-## 10 Bering Strait           7     70080 Anthony A. Andrews Sc~ St. Michael 
-## # ... with 74 more rows</code></pre>
+##    District.Name District.ID School.ID School.Name               Location      
+##    &lt;chr&gt;               &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;                     &lt;chr&gt;         
+##  1 Denali                  2     20010 Anderson School           Anderson      
+##  2 Denali                  2     20030 Cantwell School           Cantwell      
+##  3 Denali                  2     20040 Tri-Valley School         Healy         
+##  4 Denali                  2     28010 Denali Peak Program       Healy         
+##  5 Bering Strait           7     70010 Brevig Mission School     Brevig Mission
+##  6 Bering Strait           7     70040 Aniguiin School           Elim          
+##  7 Bering Strait           7     70050 Little Diomede School     Diomede       
+##  8 Bering Strait           7     70060 Martin L. Olson School    Golovin       
+##  9 Bering Strait           7     70070 Koyuk-Malimiut School     Koyuk         
+## 10 Bering Strait           7     70080 Anthony A. Andrews School St. Michael   
+## # … with 74 more rows</code></pre>
 <p><img src="https://media.giphy.com/media/10UeedrT5MIfPG/giphy.gif" style="display: block; margin: auto;" /></p>
 <div id="how-did-content-understand-that-the-gobbledygook-was-a-csv" class="section level4">
 <h4>How did <code>content()</code> understand that the gobbledygook was a csv?</h4>

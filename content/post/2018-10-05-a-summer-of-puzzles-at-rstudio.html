@@ -5,6 +5,7 @@ date: '2018-10-05'
 slug: summer-rstudio
 categories: []
 tags: []
+cover: /puzzle-cover.png
 ---
 
 
@@ -36,9 +37,16 @@ tags: []
 <h3>Puzzles and infrastructure</h3>
 <p>My internship was roughly divided into two parts: (1) the puzzles themselves and (2) the infrastructure around them.</p>
 <p>Puzzle-making was a punctuated process<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>–each burst of puzzle-making was accompanied by hours of searching the internet for inspiration. Sometimes I was at a loss for an appropriate data problem to focus on; other times, I wasn’t sure what story to build around the problem. In the end, I found that the tidyverse functions themselves were an amazing source of inspiration. For example, take the <code>separate_rows</code> function. It comes in handy in cases like this:</p>
-<pre class="r"><code>library(tidyverse)
-
-ex1 &lt;- tibble(person = c(&quot;Joey&quot;, &quot;Kris&quot;),
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✓ ggplot2 3.3.0.9000     ✓ purrr   0.3.3     
+## ✓ tibble  2.1.3          ✓ dplyr   0.8.3     
+## ✓ tidyr   1.0.0          ✓ stringr 1.4.0     
+## ✓ readr   1.3.1          ✓ forcats 0.4.0</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>ex1 &lt;- tibble(person = c(&quot;Joey&quot;, &quot;Kris&quot;),
        food = c(&quot;lentil soup; hummus with pita&quot;,
                 &quot;green curry; rice; papaya salad&quot;))
 ex1</code></pre>

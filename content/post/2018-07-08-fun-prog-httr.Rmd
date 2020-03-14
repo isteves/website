@@ -10,6 +10,7 @@ output:
   blogdown::html_page:
     toc: true
     toc_depth: 3
+cover: /post/2018-07-25-fun-prog-httr_files/fun-cover.png
 ---
 
 ```{r setup, include=FALSE}

@@ -5,6 +5,7 @@ date: '2019-06-15'
 slug: callr
 categories: []
 tags: []
+cover: /callr-cover.png
 ---
 
 Aside from the workshops and talks at [#rstudioconf](https://twitter.com/hashtag/rstudioconf?src=hash) back in January, I picked up many useful nuggets from the stream of conference tweets. I was particularly struck by this one:

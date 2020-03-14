@@ -9,6 +9,7 @@ output:
   blogdown::html_page:
     toc: true
     toc_depth: 3
+cover: /taleoftwocities.jpg
 ---
 
 Today marks the second time I've debugged the problem of tests that **pass** with `devtools::test()` but **fail** with `devtools::check()`. Since I'm now riding my debug-success high (and hope never to repeat this again), here is a blogpost.
