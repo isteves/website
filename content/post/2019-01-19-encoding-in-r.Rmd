@@ -6,7 +6,7 @@ slug: encoding-in-r
 categories: []
 tags: []
 draft: false
-code: /encoding-cover.png
+cover: /encoding-cover.png
 ---
 
 Every once in a while I complain on Twitter when I try to mix non-English letters with R. I am certainly not the first person to be frustrated by encoding issues, though I am (maybe _too_) hopeful that the problems won't last for much longer. We live in the age of vacuum bots and 3D-printing, so what makes multi-language support so complicated? 
