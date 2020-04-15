@@ -1,0 +1,180 @@
+---
+title: Window functions
+author: Irene Steves
+date: '2020-04-17'
+slug: window-functions
+categories: []
+tags: []
+output:
+  blogdown::html_page:
+    toc: true
+    toc_depth: 3
+cover: /img/window-cover.png
+draft: false
+---
+
+I recently drilled down into window functions in SQL, so here's a quick example comparing some of the syntax differences between SQL and R.
+
+<!--more-->
+
+```{r include = FALSE}
+library(knitr)
+library(kableExtra)
+set.seed(72902)
+
+kable_custom <- function(df) {
+  df %>% kable(escape = F, align = "c") %>% 
+    kable_styling(c("striped", "condensed"))
+}
+```
+
+I recently drilled down into window functions in SQL, so here's a quick example comparing some of the syntax differences between SQL and R.
+
+## The data
+
+We'll start with sequence of 10 orders with an order id and amount spent ($):
+
+```{r message = FALSE}
+library(tidyverse)
+library(dbplyr)
+library(slider)
+
+sample_orders <- tibble(o_id = 101:110,
+                        spent = round(runif(10, 5, 100), digits = 2))
+```
+
+```{r echo = FALSE}
+sample_orders %>% 
+  kable_custom()
+```
+
+## The problem
+
+Now let's say we want to calculate the following:
+
+* the total amount spent
+* the cumulative amount spent at each point in time (we id's represent the sequence of events)
+* the cumulative average amount spent at each point in time
+* a moving average of amount spent at each point in time (+/- 2 orders)
+* 4 even groups based on amount spent
+* percent rank based on amount spent
+
+## SQL solution
+
+The SQL code looks like this: 
+
+```{sql eval = FALSE}
+SELECT o_id, 
+spent,
+sum(spent) OVER () AS sum_spent,
+sum(spent) OVER (ORDER BY o_id) AS sum_spent_so_far, --assumes ROWS UNBOUNDED PRECEDING
+avg(spent) OVER (ORDER BY o_id) AS avg_spent_so_far,
+avg(spent) OVER (ORDER BY o_id ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS moving_avg_spent,
+ntile(4) OVER (ORDER BY spent) AS ntile,
+percent_rank() OVER (ORDER BY spent) AS percent_rank
+FROM sample_orders
+ORDER BY o_id
+```
+
+```{r include = FALSE}
+sql_query <- "SELECT o_id, 
+spent,
+sum(spent) OVER() AS sum_spent, 
+sum(spent) OVER (ORDER BY o_id) AS sum_spent_so_far, --assumes ROWS UNBOUNDED PRECEDING
+avg(spent) OVER (ORDER BY o_id) AS avg_spent_so_far,
+avg(spent) OVER (ORDER BY o_id ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING) AS moving_avg_spent,
+ntile(4) OVER (ORDER BY spent) AS ntile,
+percent_rank() OVER (ORDER BY spent) AS percent_rank
+FROM sample_orders
+ORDER BY o_id"
+```
+
+Using the `dbplyr` package, we can run this SQL query in R to inspect the result. 
+
+```{r}
+# set up the sample_orders tibble as a table in a database in memory
+sample_orders_db <- tbl_memdb(sample_orders)
+
+# run the query and collect the results back into R
+results_db <- tbl(src_memdb(), sql(sql_query)) %>% 
+  collect() %>% 
+  mutate_if(is.double, round, 2) # rounding for good measure
+```
+
+```{r echo = FALSE}
+spec_color_set <- partial(spec_color, alpha = .7, begin = 1, end = .5,
+                          option = "magma")
+
+results_db %>% 
+  mutate_at(vars(-o_id, -spent), round, 2) %>% 
+  mutate_at(vars(-o_id, -spent),
+            ~cell_spec(.x, background = spec_color_set(.x))) %>% 
+  kable_custom()
+```
+
+I've colored the values based on the range of each column to better see the patterns in the numbers:
+
+* `sum_spent` is the same value across all rows -- this is normally condensed into a single row when summarized
+* `sum_spent_so_far` is a cumulative sum, so it increases with time. The last value is equivalent to the total `sum_spent`
+* `avg_spent_so_far` is a cumulative mean. The first value is equivalent to the `spent` of the first order, and the last value is equivalent to the `sum_spent` divided by the number of orders (374.11/10)
+* `moving_avg_spent` smooths out the pattern of the order `spent`
+* `ntile` divides our orders into 4 groups based on the amount spent
+* `percent_rank` is also based on amount spent but gives us percents
+
+## R (tidyverse) solution
+
+In R, we write things a bit differently. I've used a mix of base (`sum()`, `cumsum()`) and `dplyr` functions (`cummean()`, `ntile()`, `percent_rank()`), and brought in [`slider`](https://davisvaughan.github.io/slider/) to calculate the moving average using `purrr`-like syntax. 
+
+```{r}
+results_r <- sample_orders %>% 
+  arrange(o_id) %>% # use this if order_by() is the same for all calculations
+  mutate(sum_spent = sum(spent),
+         sum_spent_so_far = cumsum(spent),
+         avg_spent_so_far = cummean(spent),
+         moving_avg_spent = slide_dbl(spent, mean, 
+                                      .before = 2, .after = 2,
+                                      .complete = FALSE),
+         ntile = ntile(spent, 4),
+         percent_rank = percent_rank(spent)) %>% 
+  mutate_if(is.double, round, 2) # rounding for good measure
+```
+
+It looks pretty different -- does this really give us the same result? Let's compare the resulting data frames.
+
+I would normally use `dplyr::all_equal()` but the [`diffdf` package](https://gowerc.github.io/diffdf/) gives us a more detailed report on the differences so we'll go with that this time. (Props to [Sharla's post on comparing dataframes](https://sharla.party/post/comparing-two-dfs/) for pointing me to it.)
+
+```{r}
+diffdf::diffdf(results_db, results_r)
+```
+
+We see that there actually _is_ a tiny difference in the `ntile` column! In the process of working on this post, I'd stumbled into a slight difference in the way `ntile()` distributes remainders across buckets in dplyr versus in a database. (Issue has been filed and [already resolved](https://github.com/tidyverse/dplyr/issues/4995) in the dev version of dplyr!)
+
+So, besides the small hiccup with `ntile()`, we see that it indeed is the same!
+
+## Syntax comparison
+
+For the sake of being extra thorough, let's examine the syntax differences directly with the table below. 
+
+```{r echo = FALSE}
+comparison_sql_r <- tibble::tribble(
+             ~variable,                                                                   ~r,                                                                       ~sql,
+           "sum_spent",                                                         "sum(spent)",                                                       "sum(spent) OVER ()",
+    "sum_spent_so_far",                                                      "cumsum(spent)",                                          "sum(spent) OVER (ORDER BY o_id)",
+    "avg_spent_so_far",                                                     "cummean(spent)",                                          "avg(spent) OVER (ORDER BY o_id)",
+    "moving_avg_spent", "slide_dbl(spent, mean, .before = 2, .after = 2, .complete = FALSE)", "avg(spent) OVER (ORDER BY o_id ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING)",
+               "ntile",                                                    "ntile(spent, 4)",                                           "ntile(4) OVER (ORDER BY spent)",
+        "percent_rank",                                                "percent_rank(spent)",                                     "percent_rank() OVER (ORDER BY spent)"
+    )
+#rhandsontable for editing
+
+comparison_sql_r %>% kable() %>% 
+    kable_styling(c("striped", "condensed"))
+```
+
+We see that R in general is a bit more concise, but SQL's syntax is repetitive but flexible. With the two keywords `OVER()` and `ORDER BY`, we can do almost everything. 
+
+SQL's flexibility shines the most in the `avg_spent_so_far` versus `moving_avg_spent` example. The first calculation assumes `ROWS UNBOUNDED PRECEDING` as the window. To move from a cumulative mean to a moving average, we just tweak the window -- the rest stays the same.
+
+However, the table above is actually missing R's equivalents of `OVER()` and `ORDER BY`. Because they did not need to be specified for each variable separately, I was able to extract out all the `ORDER BY o_id`s to a single `arrange(o_id)` before the `mutate()`. For the ranking functions, I expressed the `ORDER BY spent` directly in the arguments. If I had needed to, I could have specified the ordering explicitly with `order_by()`. 
+
+In my book, the ability to extract out common actions makes the tidyverse solution superior for this example. However, once I need many customized windows, SQL may win me over. 
