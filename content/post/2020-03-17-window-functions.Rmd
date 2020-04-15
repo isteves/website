@@ -9,13 +9,9 @@ output:
   blogdown::html_page:
     toc: true
     toc_depth: 3
-cover: /img/window-cover.png
+cover: /window-cover.png
 draft: false
 ---
-
-I recently drilled down into window functions in SQL, so here's a quick example comparing some of the syntax differences between SQL and R.
-
-<!--more-->
 
 ```{r include = FALSE}
 library(knitr)
@@ -177,4 +173,4 @@ SQL's flexibility shines the most in the `avg_spent_so_far` versus `moving_avg_s
 
 However, the table above is actually missing R's equivalents of `OVER()` and `ORDER BY`. Because they did not need to be specified for each variable separately, I was able to extract out all the `ORDER BY o_id`s to a single `arrange(o_id)` before the `mutate()`. For the ranking functions, I expressed the `ORDER BY spent` directly in the arguments. If I had needed to, I could have specified the ordering explicitly with `order_by()`. 
 
-In my book, the ability to extract out common actions makes the tidyverse solution superior for this example. However, once I need many customized windows, SQL may win me over. 
+In my book, the ability to extract out common actions makes the tidyverse solution superior for this example. We'll see if SQL can win me over once I need customized windows for each variable...
