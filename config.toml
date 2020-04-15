@@ -52,8 +52,8 @@ copyright = "© This post is licensed under a Creative Commons Attribution-NonCo
   
   highlightjsVersion = "9.11.0"
   highlightjsCDN = "//cdn.bootcss.com"
-  highlightjsLang = ["r", "yaml", "python"]
-  highlightjsTheme = "github-gist"
+  highlightjsLang = ["r", "yaml", "python", "sql"]
+  highlightjsTheme = "github"
 
   # Google Webmaster
   # https://www.google.com/webmasters/
