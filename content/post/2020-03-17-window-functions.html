@@ -17,7 +17,6 @@ draft: false
 
 <div id="TOC">
 <ul>
-<li><a href="#the-data">The data</a></li>
 <li><a href="#the-problem">The problem</a></li>
 <li><a href="#sql-solution">SQL solution</a></li>
 <li><a href="#r-tidyverse-solution">R (tidyverse) solution</a></li>
@@ -26,8 +25,8 @@ draft: false
 </div>
 
 <p>I recently drilled down into window functions in SQL, so here’s a quick example comparing some of the syntax differences between SQL and R.</p>
-<div id="the-data" class="section level2">
-<h2>The data</h2>
+<div id="the-problem" class="section level2">
+<h2>The problem</h2>
 <p>We’ll start with sequence of 10 orders with an order id and amount spent ($):</p>
 <pre class="r"><code>library(tidyverse)
 library(dbplyr)
@@ -129,9 +128,6 @@ spent
 </tr>
 </tbody>
 </table>
-</div>
-<div id="the-problem" class="section level2">
-<h2>The problem</h2>
 <p>Now let’s say we want to calculate the following:</p>
 <ul>
 <li>the total amount spent</li>
@@ -141,6 +137,7 @@ spent
 <li>4 even groups based on amount spent</li>
 <li>percent rank based on amount spent</li>
 </ul>
+<p>How would we do it in SQL? in R?</p>
 </div>
 <div id="sql-solution" class="section level2">
 <h2>SQL solution</h2>

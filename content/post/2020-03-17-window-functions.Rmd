@@ -26,7 +26,7 @@ kable_custom <- function(df) {
 
 I recently drilled down into window functions in SQL, so here's a quick example comparing some of the syntax differences between SQL and R.
 
-## The data
+## The problem
 
 We'll start with sequence of 10 orders with an order id and amount spent ($):
 
@@ -44,8 +44,6 @@ sample_orders %>%
   kable_custom()
 ```
 
-## The problem
-
 Now let's say we want to calculate the following:
 
 * the total amount spent
@@ -54,6 +52,8 @@ Now let's say we want to calculate the following:
 * a moving average of amount spent at each point in time (+/- 2 orders)
 * 4 even groups based on amount spent
 * percent rank based on amount spent
+
+How would we do it in SQL? in R?
 
 ## SQL solution
 
