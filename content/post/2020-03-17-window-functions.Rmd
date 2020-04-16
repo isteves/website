@@ -1,5 +1,5 @@
 ---
-title: Window functions
+title: Window functions - a SQL versus R example
 author: Irene Steves
 date: '2020-04-17'
 slug: window-functions
@@ -32,8 +32,8 @@ We'll start with sequence of 10 orders with an order id and amount spent ($):
 
 ```{r message = FALSE}
 library(tidyverse)
-library(dbplyr)
-library(slider)
+library(dbplyr) #for simulating a database
+library(slider) #for sliding window functions
 
 sample_orders <- tibble(o_id = 101:110,
                         spent = round(runif(10, 5, 100), digits = 2))
@@ -47,7 +47,7 @@ sample_orders %>%
 Now let's say we want to calculate the following:
 
 * the total amount spent
-* the cumulative amount spent at each point in time (we id's represent the sequence of events)
+* the cumulative amount spent at each point in time (we assume id's represent the sequence of events)
 * the cumulative average amount spent at each point in time
 * a moving average of amount spent at each point in time (+/- 2 orders)
 * 4 even groups based on amount spent
@@ -108,7 +108,7 @@ results_db %>%
   kable_custom()
 ```
 
-I've colored the values based on the range of each column to better see the patterns in the numbers:
+I've colored the values based on the range of **each column** to better see the patterns in the numbers:
 
 * `sum_spent` is the same value across all rows -- this is normally condensed into a single row when summarized
 * `sum_spent_so_far` is a cumulative sum, so it increases with time. The last value is equivalent to the total `sum_spent`
@@ -145,7 +145,7 @@ diffdf::diffdf(results_db, results_r)
 
 We see that there actually _is_ a tiny difference in the `ntile` column! In the process of working on this post, I'd stumbled into a slight difference in the way `ntile()` distributes remainders across buckets in dplyr versus in a database. (Issue has been filed and [already resolved](https://github.com/tidyverse/dplyr/issues/4995) in the dev version of dplyr!)
 
-So, besides the small hiccup with `ntile()`, we see that it indeed is the same!
+So, besides the small hiccup with `ntile()`, we see that **it indeed is the same**!
 
 ## Syntax comparison
 
@@ -171,6 +171,8 @@ We see that R in general is a bit more concise, but SQL's syntax is repetitive b
 
 SQL's flexibility shines the most in the `avg_spent_so_far` versus `moving_avg_spent` example. The first calculation assumes `ROWS UNBOUNDED PRECEDING` as the window. To move from a cumulative mean to a moving average, we just tweak the window -- the rest stays the same.
 
-However, the table above is actually missing R's equivalents of `OVER()` and `ORDER BY`. Because they did not need to be specified for each variable separately, I was able to extract out all the `ORDER BY o_id`s to a single `arrange(o_id)` before the `mutate()`. For the ranking functions, I expressed the `ORDER BY spent` directly in the arguments. If I had needed to, I could have specified the ordering explicitly with `order_by()`. 
+You may have noticed that the table above is actually missing R's equivalents of `OVER()` and `ORDER BY`. Because they did not need to be specified for each variable separately, I was able to extract out all the `ORDER BY o_id`s to a single `arrange(o_id)` before the `mutate()`. For the ranking functions, I expressed the `ORDER BY spent` directly in the arguments. If I had needed to, I could have specified the ordering explicitly with `order_by()`. 
 
-In my book, the ability to extract out common actions makes the tidyverse solution superior for this example. We'll see if SQL can win me over once I need customized windows for each variable...
+In my book, the ability to extract out common actions makes the tidyverse solution superior for this example. I imagine that with more complex windows with unique order-by's, SQL may have a chance of winning me over.
+
+Have an alternative solution? Feel free to share in the comments!
