@@ -1,0 +1,856 @@
+---
+title: Windowed rank functions
+author: Irene Steves
+date: '2020-04-17'
+slug: window-rank-functions
+categories: []
+tags: []
+---
+
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+
+
+<p>In my <a href="https://irene.rbind.io/post/window-functions/">recent exploration of window functions</a>, I realized didn’t really know the differences between rank functions. The <a href="https://dplyr.tidyverse.org/reference/ranking.html">dplyr documentation</a> lists out six functions, of which I pretty much only use one (<code>row_number()</code>):</p>
+<ul>
+<li><code>row_number()</code></li>
+<li><code>ntile()</code></li>
+<li><code>min_rank()</code></li>
+<li><code>dense_rank()</code></li>
+<li><code>percent_rank()</code></li>
+<li><code>cume_dist()</code></li>
+</ul>
+<p>Though the documentation description is relatively clear, it was still hard to grasp exactly how they differed. I found it easier to do the comparison visually.</p>
+<div id="trivia-score-ranks" class="section level2">
+<h2>Trivia score ranks</h2>
+<p>Given a toy dataset of trivia scores from two teams, let’s see how the scores rank using the functions above.</p>
+<pre class="r"><code>library(tidyverse)
+theme_set(theme_minimal())
+
+set.seed(20200417) #so I get the same teams each time
+trivia_scores &lt;- tibble(team = sample(c(&quot;cheetah&quot;, &quot;ibex&quot;), 10, replace = TRUE),
+                        score = c(3, 6, 6, 18, 39, 40, 40, 40, 42, 99))
+
+window_rank_example &lt;- trivia_scores %&gt;% 
+    mutate(ntile3 = ntile(score, 3),
+           min_rank = min_rank(score),
+           dense_rank = dense_rank(score),
+           percent_rank = percent_rank(score) %&gt;% round(3),
+           cume_dist = cume_dist(score)) </code></pre>
+<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:center;">
+team
+</th>
+<th style="text-align:center;">
+score
+</th>
+<th style="text-align:center;">
+ntile3
+</th>
+<th style="text-align:center;">
+min_rank
+</th>
+<th style="text-align:center;">
+dense_rank
+</th>
+<th style="text-align:center;">
+percent_rank
+</th>
+<th style="text-align:center;">
+cume_dist
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">0</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">0.1</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+6
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 227, 165, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 214, 152, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 227, 165, 0.7) !important;">0.111</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 201, 140, 0.7) !important;">0.3</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+6
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 227, 165, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 214, 152, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 227, 165, 0.7) !important;">0.111</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 201, 140, 0.7) !important;">0.3</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+18
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">4</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">0.333</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">0.4</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+39
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 149, 103, 0.7) !important;">5</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">4</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 149, 103, 0.7) !important;">0.444</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 149, 103, 0.7) !important;">0.5</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+40
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(249, 121, 93, 0.7) !important;">6</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">5</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(249, 121, 93, 0.7) !important;">0.556</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(226, 77, 102, 0.7) !important;">0.8</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+40
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(249, 121, 93, 0.7) !important;">6</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">5</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(249, 121, 93, 0.7) !important;">0.556</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(226, 77, 102, 0.7) !important;">0.8</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+40
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(249, 121, 93, 0.7) !important;">6</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">5</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(249, 121, 93, 0.7) !important;">0.556</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(226, 77, 102, 0.7) !important;">0.8</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+42
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(204, 64, 113, 0.7) !important;">9</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(215, 69, 108, 0.7) !important;">6</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(204, 64, 113, 0.7) !important;">0.889</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(204, 64, 113, 0.7) !important;">0.9</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+99
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">10</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">7</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">1</span>
+</td>
+</tr>
+</tbody>
+</table>
+<p>From the patterns above we see that:</p>
+<ul>
+<li>the distances between scores don’t matter (39 to 40 is treated the same way as 42 to 99)</li>
+<li>all except for <code>ntile()</code> clump the three 40’s together into one team</li>
+<li><code>min_rank()</code> reaches 10 (the total number of scores) whereas <code>dense_rank()</code> reaches 7 (the total number of <em>distinct</em> scores)</li>
+<li><code>percent_rank()</code> is similar to <code>min_rank()</code> except that (a) it ranges from 0 to 1 and (b) each step is 0.111 instead of 1</li>
+<li>each step of <code>cume_dist()</code> is 1 / # scores (1/10 = 0.1 in this case) and is similar to <code>min_rank()</code> except that all ties get the <em>maximum</em> score</li>
+</ul>
+<p>To dig into it even more, here’s another way of visualizing the ranks. Since ranks are only dependent on the <em>order</em> of values and not the value itself (except with repeats), I’ve used row number for the x-axis and added it as a light gray background as well.</p>
+<p>We see that with the exception of <code>ntile</code>, all ranking functions group repeated numbers together (I colored the <span style="color:#81d5a6;font-weight:bold">two 6’s in seagreen</span> and the <span style="color:#ff8c69;font-weight:bold">three 40’s in salmon</span>).</p>
+<p><img src="/post/2020-04-17-window-rank-functions_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Since <code>percent_rank()</code> and <code>cume_dist()</code> reach a maximum of 1, I decided to plot them separately. The light gray background indicates equal increments of 0.1 across all 10 values.</p>
+<p><img src="/post/2020-04-17-window-rank-functions_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+</div>
+<div id="ranking-per-group" class="section level2">
+<h2>Ranking per group</h2>
+<p>Splitting by team requires just one extra line (and one more to make the resulting table look nicer):</p>
+<pre class="r"><code>window_rank_example_teams &lt;- trivia_scores %&gt;% 
+    group_by(team) %&gt;% # only change needed!
+    arrange(team, score) %&gt;% # not required but easier to digest visually  
+    mutate(ntile3 = ntile(score, 3),
+           min_rank = min_rank(score),
+           dense_rank = dense_rank(score),
+           percent_rank = percent_rank(score) %&gt;% round(3),
+           cume_dist = cume_dist(score)) </code></pre>
+<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:center;">
+team
+</th>
+<th style="text-align:center;">
+score
+</th>
+<th style="text-align:center;">
+ntile3
+</th>
+<th style="text-align:center;">
+min_rank
+</th>
+<th style="text-align:center;">
+dense_rank
+</th>
+<th style="text-align:center;">
+percent_rank
+</th>
+<th style="text-align:center;">
+cume_dist
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+18
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">0</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">0.25</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+40
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">0.333</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">0.5</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+42
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">0.667</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">0.75</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+99
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">4</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">4</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">1</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">0</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">0.166666666666667</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+6
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 194, 135, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 194, 135, 0.7) !important;">0.2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 159, 109, 0.7) !important;">0.5</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+6
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 194, 135, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 194, 135, 0.7) !important;">0.2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 159, 109, 0.7) !important;">0.5</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+39
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(230, 81, 100, 0.7) !important;">4</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(230, 81, 100, 0.7) !important;">0.6</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(247, 111, 92, 0.7) !important;">0.666666666666667</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+40
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">5</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">4</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">0.8</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">1</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+40
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">5</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">4</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">0.8</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">1</span>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Now, instead of overall ranks, the scores for each team are ranked separately.</p>
+</div>
+<div id="reversing-ranks" class="section level2">
+<h2>Reversing ranks</h2>
+<p>Perhaps you think it’s weird that the lowest trivia scores get the highest rank (1). To reverse the ranking order, we can use either <code>desc()</code> or just add a <code>-</code>.</p>
+<pre class="r"><code>window_rank_example_reversed &lt;- trivia_scores %&gt;% 
+    mutate(ntile3 = ntile(-score, 3),
+           min_rank = min_rank(-score),
+           dense_rank = dense_rank(-score),
+           percent_rank = percent_rank(-score) %&gt;% round(3),
+           cume_dist = cume_dist(-score)) </code></pre>
+<table class="table table-striped table-condensed" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:center;">
+team
+</th>
+<th style="text-align:center;">
+score
+</th>
+<th style="text-align:center;">
+ntile3
+</th>
+<th style="text-align:center;">
+min_rank
+</th>
+<th style="text-align:center;">
+dense_rank
+</th>
+<th style="text-align:center;">
+percent_rank
+</th>
+<th style="text-align:center;">
+cume_dist
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">10</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">7</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">1</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+6
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(226, 77, 102, 0.7) !important;">8</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(215, 69, 108, 0.7) !important;">6</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(226, 77, 102, 0.7) !important;">0.778</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(204, 64, 113, 0.7) !important;">0.9</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+6
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(182, 54, 121, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(226, 77, 102, 0.7) !important;">8</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(215, 69, 108, 0.7) !important;">6</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(226, 77, 102, 0.7) !important;">0.778</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(204, 64, 113, 0.7) !important;">0.9</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+18
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">7</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">5</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">0.667</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(241, 96, 93, 0.7) !important;">0.7</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+39
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(249, 121, 93, 0.7) !important;">6</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">4</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(249, 121, 93, 0.7) !important;">0.556</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(249, 121, 93, 0.7) !important;">0.6</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+40
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 201, 140, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 201, 140, 0.7) !important;">0.222</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 149, 103, 0.7) !important;">0.5</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+40
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 201, 140, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 201, 140, 0.7) !important;">0.222</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 149, 103, 0.7) !important;">0.5</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+ibex
+</td>
+<td style="text-align:center;">
+40
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 136, 97, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 201, 140, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 175, 119, 0.7) !important;">3</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 201, 140, 0.7) !important;">0.222</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 149, 103, 0.7) !important;">0.5</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+42
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 227, 165, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(254, 214, 152, 0.7) !important;">2</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 227, 165, 0.7) !important;">0.111</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(253, 227, 165, 0.7) !important;">0.2</span>
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+cheetah
+</td>
+<td style="text-align:center;">
+99
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">1</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">0</span>
+</td>
+<td style="text-align:center;">
+<span style="     border-radius: 4px; padding-right: 4px; padding-left: 4px; background-color: rgba(252, 253, 191, 0.7) !important;">0.1</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>And that’s all there is to it! Hope the visual aids help to reinforce the differences in the options.</p>
+</div>

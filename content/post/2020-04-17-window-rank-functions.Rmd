@@ -1,0 +1,162 @@
+---
+title: Windowed rank functions
+author: Irene Steves
+date: '2020-04-17'
+slug: window-rank-functions
+categories: []
+tags: []
+---
+
+In my [recent exploration of window functions](https://irene.rbind.io/post/window-functions/), I realized didn't really know the differences between rank functions. The [dplyr documentation](https://dplyr.tidyverse.org/reference/ranking.html) lists out six functions, of which I pretty much only use one (`row_number()`):
+
+* `row_number()`
+* `ntile()`
+* `min_rank()`
+* `dense_rank()`
+* `percent_rank()`
+* `cume_dist()`
+
+Though the documentation description is relatively clear, it was still hard to grasp exactly how they differed. I found it easier to do the comparison visually. 
+
+## Trivia score ranks
+
+Given a toy dataset of trivia scores from two teams, let's see how the scores rank using the functions above.
+
+```{r message = FALSE}
+library(tidyverse)
+theme_set(theme_minimal())
+
+set.seed(20200417) #so I get the same teams each time
+trivia_scores <- tibble(team = sample(c("cheetah", "ibex"), 10, replace = TRUE),
+                        score = c(3, 6, 6, 18, 39, 40, 40, 40, 42, 99))
+
+window_rank_example <- trivia_scores %>% 
+    mutate(ntile3 = ntile(score, 3),
+           min_rank = min_rank(score),
+           dense_rank = dense_rank(score),
+           percent_rank = percent_rank(score) %>% round(3),
+           cume_dist = cume_dist(score)) 
+```
+
+```{r echo = FALSE, message = FALSE}
+library(kableExtra)
+library(knitr)
+
+spec_color_set <- partial(spec_color, alpha = .7, begin = 1, end = .5,
+                          option = "magma")
+
+window_rank_example %>% 
+    mutate_at(vars(ntile3, min_rank, dense_rank, percent_rank, cume_dist),
+              ~cell_spec(.x, background = spec_color_set(.x))) %>% 
+    kable(escape = F, align = "c") %>% 
+    kable_styling(c("striped", "condensed"))
+```
+
+From the patterns above we see that:
+
+* the distances between scores don't matter (39 to 40 is treated the same way as 42 to 99)
+* all except for `ntile()` clump the three 40's together into one team
+* `min_rank()` reaches 10 (the total number of scores) whereas `dense_rank()` reaches 7 (the total number of _distinct_ scores)
+* `percent_rank()` is similar to `min_rank()` except that (a) it ranges from 0 to 1 and (b) each step is 0.111 instead of 1
+* each step of `cume_dist()` is 1 / # scores (1/10 = 0.1 in this case) and is similar to `min_rank()` except that all ties get the _maximum_ score
+
+To dig into it even more, here's another way of visualizing the ranks. Since ranks are only dependent on the _order_ of values and not the value itself (except with repeats), I've used row number for the x-axis and added it as a light gray background as well. 
+
+We see that with the exception of `ntile`, all ranking functions group repeated numbers together (I colored the <span style = 'color:#81d5a6;font-weight:bold'>two 6's in seagreen</span> and the <span style = 'color:#ff8c69;font-weight:bold'>three 40's in salmon</span>). 
+
+```{r echo = FALSE}
+window_rank_example %>% 
+    mutate(row = factor(row_number())) %>% 
+    gather(type, value, -team, -score, -row) %>% 
+    mutate(type = fct_inorder(type)) %>% 
+    mutate(coloring = case_when(
+        score == 6 ~ "six",
+        score == 40 ~ "forty",
+        TRUE ~ "other"
+    )) %>% 
+    filter(type %in% c("ntile3", "min_rank", "dense_rank")) %>% 
+    ggplot(aes(row, value, fill = coloring)) +
+    geom_col(aes(row, as.numeric(row)), fill = "grey90") +
+    geom_col(size = 5) +
+    facet_grid(~ type) +
+    scale_y_continuous(n.breaks = 10, expand = c(0, 0)) +
+    scale_fill_manual(values = c("six" = "#81d5a6", 
+                                 "forty" = "#ff8c69",
+                                 "other" = "grey60")) +
+    guides(fill = FALSE) 
+```
+
+Since `percent_rank()` and `cume_dist()` reach a maximum of 1, I decided to plot them separately. The light gray background indicates equal increments of 0.1 across all 10 values.
+
+```{r echo = FALSE}
+window_rank_example %>% 
+    mutate(row = factor(row_number())) %>% 
+    gather(type, value, -team, -score, -row) %>% 
+    mutate(type = fct_inorder(type)) %>% 
+    mutate(coloring = case_when(
+        score == 6 ~ "six",
+        score == 40 ~ "forty",
+        TRUE ~ "other"
+    )) %>% 
+    filter(type %in% c("percent_rank", "cume_dist")) %>% 
+    ggplot(aes(row, value, fill = coloring)) +
+    geom_col(aes(row, as.numeric(row) / 10), fill = "grey90") +
+    geom_col(size = 5) +
+    facet_grid(~ type) +
+    scale_y_continuous(n.breaks = 10, expand = c(0, 0)) +
+    scale_fill_manual(values = c("six" = "#81d5a6", 
+                                 "forty" = "#ff8c69",
+                                 "other" = "grey60")) +
+    guides(fill = FALSE) 
+```
+
+
+## Ranking per group
+
+Splitting by team requires just one extra line (and one more to make the resulting table look nicer):
+
+```{r}
+window_rank_example_teams <- trivia_scores %>% 
+    group_by(team) %>% # only change needed!
+    arrange(team, score) %>% # not required but easier to digest visually  
+    mutate(ntile3 = ntile(score, 3),
+           min_rank = min_rank(score),
+           dense_rank = dense_rank(score),
+           percent_rank = percent_rank(score) %>% round(3),
+           cume_dist = cume_dist(score)) 
+```
+
+```{r echo = FALSE, message = FALSE}
+window_rank_example_teams %>% 
+    mutate_at(vars(ntile3, min_rank, dense_rank, percent_rank, cume_dist),
+              ~cell_spec(.x, background = spec_color_set(.x))) %>% 
+    kable(escape = F, align = "c") %>% 
+    kable_styling(c("striped", "condensed"))
+```
+
+Now, instead of overall ranks, the scores for each team are ranked separately. 
+
+## Reversing ranks
+
+Perhaps you think it's weird that the lowest trivia scores get the highest rank (1). To reverse the ranking order, we can use either `desc()` or just add a `-`.
+
+```{r message = FALSE}
+window_rank_example_reversed <- trivia_scores %>% 
+    mutate(ntile3 = ntile(-score, 3),
+           min_rank = min_rank(-score),
+           dense_rank = dense_rank(-score),
+           percent_rank = percent_rank(-score) %>% round(3),
+           cume_dist = cume_dist(-score)) 
+```
+
+```{r echo = FALSE, message = FALSE}
+window_rank_example_reversed %>% 
+    mutate_at(vars(ntile3, min_rank, dense_rank, percent_rank, cume_dist),
+              ~cell_spec(.x, background = spec_color_set(.x))) %>% 
+    kable(escape = F, align = "c") %>% 
+    kable_styling(c("striped", "condensed"))
+```
+
+## Conclusion
+
+And that's all there is to it! Hope the visual aids help to reinforce the differences in the options.
