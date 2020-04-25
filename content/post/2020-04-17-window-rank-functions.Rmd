@@ -5,6 +5,7 @@ date: '2020-04-17'
 slug: window-rank-functions
 categories: []
 tags: []
+cover: /window-rank.png
 ---
 
 In my [recent exploration of window functions](https://irene.rbind.io/post/window-functions/), I realized didn't really know the differences between rank functions. The [dplyr documentation](https://dplyr.tidyverse.org/reference/ranking.html) lists out six functions, of which I pretty much only use one (`row_number()`):
