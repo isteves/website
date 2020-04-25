@@ -19,6 +19,8 @@ In my [recent exploration of window functions](https://irene.rbind.io/post/windo
 
 Though the documentation description is relatively clear, it was still hard to grasp exactly how they differed. I found it easier to do the comparison visually. 
 
+![](/window-rank.png)
+
 ## Trivia score ranks
 
 Given a toy dataset of trivia scores from two teams, let's see how the scores rank using the functions above.
