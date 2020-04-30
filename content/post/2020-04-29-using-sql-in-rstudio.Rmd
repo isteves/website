@@ -6,41 +6,47 @@ slug: using-sql-in-rstudio
 categories: []
 tags: []
 cover: /cover-sql-r-friends.png
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true
     toc_depth: 3
 ---
 
-In the last year, SQL has wound its way deeper and deeper into my R workflow. Today is an Israeli holiday (Independence Day) so I figured it was a good opportunity to upgrade my R-SQL workflow and take advantage of the SQL tools RStudio provides.
+In the last year, SQL has wound its way deeper and deeper into my R workflow. I switch between the two every day, but up to now, I've been slow diving into the SQL tools RStudio provides. This post documents the little tricks I've gathered scouring RStudio Community posts, [blogposts](https://blog.rstudio.com/2018/10/02/rstudio-1-2-preview-sql/), and other resources for help upgrading my R-SQL workflow.
+
+```{r include = FALSE}
+library(knitr)
+opts_chunk$set(comment="") #recommended by: https://r-resources.massey.ac.nz/rmarkdown/
+```
+
 
 ## My starting point
 
 My typical workflow currently looks like this:
 
-1) Draft and refine SQL queries in the [Rubymine IDE(https://www.jetbrains.com/ruby/)
+1) Draft and refine SQL queries in the [Rubymine IDE](https://www.jetbrains.com/ruby/)
 2) Bring the data into R/RStudio by calling `DBI::dbGetQuery()` or a similar function
 3) Do complex manipulations or visualizations of the data in R/RStudio
 4) Iterate on the steps above
 
-The peculiarities of the workflow above is part of the analytics code culture in my company, not necessarily because it is particularly optimized. When I first joined, I asked why people used RubyMine when it seemed that you can work with SQL within RStudio. The answer came with a shrug: "habit, I guess." 
+This workflow is something I've largely absorbed from my coworkers. Some of the peculiarities are due to historical accidents -- for example, many of the early developers at the company used Ruby, so RubyMine also became the IDE of choice for working with SQL. That said, this flow works pretty well for us.
 
-In the last year, I have found a few benefits of using RubyMine (or really, any other IDE with advanced SQL support) over RStudio:
+Over time, I found my own reasons for using RubyMine (or really, any other IDE with advanced SQL support):
 
 * easy to kill queries
-* syntax highlighting for SQL (when used with `DBI::dbGetQuery()` or similar functions) -- this means that the SQL code is colored to highlight keywords, etc.
+* syntax highlighting (code coloring) for SQL
 * auto-completion for SQL
 * auto-formatting for SQL (cmd + option + l is my favorite shortcut ever in RubyMine)
 * helpful hints/errors when something's wrong with my query
 
 ![](/post/2020-04-29-using-sql-in-rstudio_files/sql-autoformat.gif)
 
-I don't think RStudio has enough SQL features for me to fully move over that part of my flow, but it has many more features than I'd realized. 
+I'm glad I was forced to venture out of my RStudio comfort zone, but I've begun to discover that some of the features I love about RubyMine actually exist in RStudio as well.
 
 ## Previewing SQL in RStudio
 
-Up to now, I was only familiar with dataframe-style previews of query results. Such as in the example below:
+Up to now, I'd only used dataframe-style previews of query results, such as in the example below:
 
 ```{r message = FALSE}
 library(dplyr)
@@ -51,10 +57,6 @@ copy_to(conn,
         storms,     # this is a dataset built into dplyr
         overwrite = TRUE)
 tbl(conn, sql("SELECT * FROM storms LIMIT 5"))
-```
-
-```{r include = FALSE}
-conn_isolated <- conn$con
 ```
 
 It turns out that within RStudio, there are actually (at least) two other methods of previewing SQL queries. (Thank you to RStudio Community posts such as [this one](https://community.rstudio.com/t/rmd-file-with-embedded-sql-chunk-possible-to-move-the-sql-to-external-file-then-source/49651) for enlightening me.) These two methods also have the added benefit of SQL code with syntax highlighting. 
@@ -69,21 +71,34 @@ When you open a new `.sql` file in RStudio, it automatically populates the file 
 SELECT 1
 ```
 
-I always blindly deleted the header, but it turns out that this header allows me to preview queries in RStudio!  If you supply it with a working database connection (no spaces around the `=`!) and click the **Preview** button, a **SQL Results** tab pops up next to the Console with the query results. 
+I'd always blindly deleted the header, but it turns out that all this time, RStudio had been trying to tell me that I can actually preview queries _in_ RStudio!  If you supply it with a working database connection (no spaces around the `=`!) and click the **Preview** button, a **SQL Results** tab pops up next to the Console with the query results. 
 
 ![](/post/2020-04-29-using-sql-in-rstudio_files/sql-file-preview.png)
 
-Note that unlike in the `tbl()` example above, you have to pull out the connection from the `src_memdb()` using `$con`. This seems to be a special case; other connections seem to work without extra fussing.
+If you've run the previous dplyr/dbplyr code chunk in the same session, you'll have both the connection and the data you need to test out this preview function yourself! Just create a `.sql` file with the following code:
+
+```sql
+-- !preview conn=src_memdb()$con
+
+SELECT * FROM storms LIMIT 5
+
+```
+
+Note that unlike in the `tbl()` example above, you have to pull out the connection from the `src_memdb()` using `$con`. This seems to be a special case; other connections seem to work without extra fussing. For the rest of this post, I'll refer to this connection as `con` with one "n" (with the exception of the gif below, where I gave it the lengthier name `conn_isolated`).
+
+```{r}
+con <- src_memdb()$con
+```
 
 ### 2. SQL chunks in RMarkdown
 
-I generally prefer to show RMarkdown output **in the console** [^1] (and it looks like [I'm not the only one](https://twitter.com/earowang/status/1123512515088879616).) This means that when I run code in an `.Rmd` file, it feels more or less the same as when I run an `.R` file: the plots show up in the plots pane, code is run in the console, and so on. 
+I generally prefer to show RMarkdown output **in the console** [^1] (and it looks like [I'm not the only one](https://twitter.com/earowang/status/1123512515088879616)). This means that when I run code in an `.Rmd` file, it feels more or less the same as when I run an `.R` file: the plots show up in the plots pane, code is run in the console, and so on. 
 
-[^1]: `Global Options` --> `R Markdown` --> _uncheck_ `Show output inline for all R Markdown documents`
+[^1]: For "console mode" Rmd's: `Global Options` --> `R Markdown` --> _uncheck_ `Show output inline for all R Markdown documents`
 
-While you can use SQL chunks with this setting, **there is NO chunk preview option**. You must trust your queries and **knit** the file to make sure. You get the syntax highlighting razzle-dazzle but alas-- no preview.
+While you can use SQL chunks with this setting, **there is NO chunk preview option**. You must trust your queries and **knit** the file to make sure everything runs. You get the syntax highlighting razzle-dazzle but alas-- no preview.
 
-It is in this very specific case where **inline mode** wins. SQL preview magically becomes an option and you get to interact with your beautifully colored SQL code.
+It is in this very specific case where **inline mode** wins big time. SQL previews magically become an option, allowing you to interact with your beautifully colored SQL code.
 
 ![](/post/2020-04-29-using-sql-in-rstudio_files/sql-inline-preview.gif)
 
@@ -97,73 +112,76 @@ When using SQL chunks, you can specify an output variable using the `output.var`
 
 [^2]: There are a few additional chunk option examples in the [SQL language engine](https://bookdown.org/yihui/rmarkdown/language-engines.html#sql) section of _R Markdown: The Definitive Guide_
 
-In inline mode, the preview will no longer appear when running the SQL chunk, but the variable will appear in your environment like any normal variable. This is the same behavior as a regular variable assignment in R (`storm_preview <- blah`).
+In inline mode, the preview will no longer appear when running the SQL chunk, but the variable will appear in your environment. Think of it like a regular variable assignment in R, where no output is printed when a variable is assigned (`storm_preview <- "blah"`).[^3]
+
+[^3]: For all my enthusiasm for syntax highlighting, I admit I do not understand how to do it properly when quoting RMarkdown chunks, though this [RStudio blogpost](https://support.rstudio.com/hc/en-us/articles/360018181633-Including-verbatim-R-code-chunks-inside-R-Markdown) gave me some clues. For more details on how to use syntax highlighting with blogdown, I recommend posts by [Amber Thomas](https://support.rstudio.com/hc/en-us/articles/360018181633-Including-verbatim-R-code-chunks-inside-R-Markdown) and [Maëlle Salmon](https://ropensci.org/technotes/2020/04/30/code-highlighting/)
 
 ````markdown
-`r ''````{sql connection=conn_isolated, output.var="storm_preview"}
+`r ''````{sql connection=con, output.var="storm_preview"}
 SELECT * FROM storms LIMIT 5;
 ```
 ````
 
-````markdown
+````
 `r ''````{r}
 storm_preview
 ```
 ````
 
-#### Providing query parameters
+### Providing query parameters
 
-Adding a single variable is quite simple. Add `?` before the variable in the SQL chunk and just make sure that the R variable has the same name.
+**Adding a single variable** is quite simple. Add `?` before the variable in the SQL chunk and just make sure that the R variable has the same name.
 
-````markdown
+````
 `r ''````{r}
 storm_status <- "hurricane"
 ```
 ````
 
 ````markdown
-`r ''````{sql connection=conn_isolated}
+`r ''````{sql connection=con}
 SELECT * FROM storms WHERE status = ?storm_status LIMIT 5;
 ```
 ````
 
-Sometimes, you cannot simply pass in a parameter. The `glue_sql()` function is great at managing some of the magic for you. To pass in a column name as a parameter, for example, you can just wrap the string in `glue_sql()`. 
+Sometimes, you cannot simply pass in a parameter. The `glue_sql()` function is great at managing some of the magic for you. To pass in a column name as a parameter, for example, you can just wrap the string in `glue_sql()` and it just works. 
 
-````markdown
+````
 `r ''````{r}
 col_name <- glue::glue_sql("status")
 ```
 ````
 
 ````markdown
-`r ''````{sql connection=conn_isolated}
+`r ''````{sql connection=con}
 SELECT * FROM storms WHERE ?col_name = 'hurricane' LIMIT 5;
 ```
 ````
 
-**Note:** Generally, you will also need to specify the `.con` (connection) so that `glue` will know what type of SQL syntax you need. 
+_Note:_ Generally, you will also need to specify the `.con` (connection) so that `glue` will know what type of SQL syntax you need. 
 
-Now, what if you want to [provide multiple parameters](https://community.rstudio.com/t/using-multiple-r-variables-in-sql-chunk/2940/13)? Adding an `*` to the end of the variable collapses the vector into a single comma-separated expression, rather than outputting a vector of SQL expressions.
+Now, what if you want to **[provide multiple parameters](https://community.rstudio.com/t/using-multiple-r-variables-in-sql-chunk/2940/13)**? Adding an `*` to the end of the variable collapses the vector into a single comma-separated expression, rather than outputting a vector of SQL expressions. This behavior is somewhat reminiscent of `args` and `kwargs` in Python, which uses `*` as an unpacking operator.
 
 ```{r}
 types <- c("hurricane", "tropical depression")
-glue::glue_sql("{types}", .con = conn_isolated)
-glue::glue_sql("{types*}", .con = conn_isolated)
+
+# without an asterisk
+glue::glue_sql("{types}", .con = con)
+# with an asterisk
+glue::glue_sql("{types*}", .con = con)
 ```
 
-It is somewhat reminiscent of `args` and `kwargs` in Python, which uses `*` as an unpacking operator.
+Of course, to pass these parameters to our SQL chunk, we need to make sure we have the appropriate parentheses around `?storm_status` for the `IN` to run.
 
-Of course, to pass these parameters to our SQL chunk, we need to make sure we have the appropriate parentheses for the `IN` to run.
-
-````markdown
+````
 `r ''````{r}
 types <- c("hurricane", "tropical depression")
-storm_status <- glue::glue_sql("{types*}", .con = conn_isolated)
+storm_status <- glue::glue_sql("{types*}", .con = con)
 ```
 ````
 
 ````markdown
-`r ''````{sql connection=conn_isolated}
+`r ''````{sql connection=con}
 SELECT * FROM storms WHERE status IN (?storm_status) LIMIT 5;
 ```
 ````
@@ -172,14 +190,14 @@ SELECT * FROM storms WHERE status IN (?storm_status) LIMIT 5;
 
 What if you have a gigantic SQL query that you want to store in a separate file but you _also_ want to use chunks? 
 
-I had no idea that chunks had a `code` parameter until I came across Christophe Dervieux's comments in [this RStudio Community discussion]( https://community.rstudio.com/t/rmd-file-with-embedded-sql-chunk-possible-to-move-the-sql-to-external-file-then-source/49651/15). You can use it read in a SQL file with your query, parameters and all.
+I had no idea that chunks had a `code` parameter until I came across Christophe Dervieux's comments in [this RStudio Community discussion]( https://community.rstudio.com/t/rmd-file-with-embedded-sql-chunk-possible-to-move-the-sql-to-external-file-then-source/49651). You can use it read in a SQL file with your query, parameters and all.
 
 ````markdown
-`r ''````{sql connection=conn_isolated, code=readLines("storm_preview.sql"), output.var="storm_preview"}
+`r ''````{sql connection=con, code=readLines("storm.sql"), output.var="storm_preview"}
 ```
 ````
 
-````markdown
+````
 `r ''````{r}
 storm_preview
 ```
@@ -189,9 +207,9 @@ When you knit the file, the imported SQL (and its comments) is included in the o
 
 ![](/post/2020-04-29-using-sql-in-rstudio_files/sql-readlines.png)
 
-## R & SQL
+## R & SQL -- working hand-in-hand
 
-At the end of the day, both R and SQL are--and will remain--big parts of my analysis flow, so it's these little tricks that make it just that much easier to integrate both smoothly into a single analysis. 
+At the end of the day, both R and SQL are--and will remain--big parts of my analysis flow, so it's these little tricks that help to smooth out the little points of friction on the way. If you have more tricks to share with me, leave a comment or ping me [on Twitter](!
 
 ![](/post/2020-04-29-using-sql-in-rstudio_files/sql-r-friends.png)
 

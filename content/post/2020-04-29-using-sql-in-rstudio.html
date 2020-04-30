@@ -6,7 +6,7 @@ slug: using-sql-in-rstudio
 categories: []
 tags: []
 cover: /cover-sql-r-friends.png
-draft: true
+draft: false
 output:
   blogdown::html_page:
     toc: true
@@ -23,37 +23,38 @@ output:
 </ul></li>
 <li><a href="#passing-variables-tofrom-sql-chunks">Passing variables to/from SQL chunks</a><ul>
 <li><a href="#sql-output-as-a-variable">SQL output as a variable</a></li>
+<li><a href="#providing-query-parameters">Providing query parameters</a></li>
 </ul></li>
 <li><a href="#sql-files-meet-chunks">SQL files meet chunks</a></li>
-<li><a href="#r-sql">R &amp; SQL</a></li>
+<li><a href="#r-sql-working-hand-in-hand">R &amp; SQL – working hand-in-hand</a></li>
 </ul>
 </div>
 
-<p>In the last year, SQL has wound its way deeper and deeper into my R workflow. Today is an Israeli holiday (Independence Day) so I figured it was a good opportunity to upgrade my R-SQL workflow and take advantage of the SQL tools RStudio provides.</p>
+<p>In the last year, SQL has wound its way deeper and deeper into my R workflow. I switch between the two every day, but up to now, I’ve been slow diving into the SQL tools RStudio provides. This post documents the little tricks I’ve gathered scouring RStudio Community posts, <a href="https://blog.rstudio.com/2018/10/02/rstudio-1-2-preview-sql/">blogposts</a>, and other resources for help upgrading my R-SQL workflow.</p>
 <div id="my-starting-point" class="section level2">
 <h2>My starting point</h2>
 <p>My typical workflow currently looks like this:</p>
 <ol style="list-style-type: decimal">
-<li>Draft and refine SQL queries in the [Rubymine IDE(<a href="https://www.jetbrains.com/ruby/" class="uri">https://www.jetbrains.com/ruby/</a>)</li>
+<li>Draft and refine SQL queries in the <a href="https://www.jetbrains.com/ruby/">Rubymine IDE</a></li>
 <li>Bring the data into R/RStudio by calling <code>DBI::dbGetQuery()</code> or a similar function</li>
 <li>Do complex manipulations or visualizations of the data in R/RStudio</li>
 <li>Iterate on the steps above</li>
 </ol>
-<p>The peculiarities of the workflow above is part of the analytics code culture in my company, not necessarily because it is particularly optimized. When I first joined, I asked why people used RubyMine when it seemed that you can work with SQL within RStudio. The answer came with a shrug: “habit, I guess.”</p>
-<p>In the last year, I have found a few benefits of using RubyMine (or really, any other IDE with advanced SQL support) over RStudio:</p>
+<p>This workflow is something I’ve largely absorbed from my coworkers. Some of the peculiarities are due to historical accidents – for example, many of the early developers at the company used Ruby, so RubyMine also became the IDE of choice for working with SQL. That said, this flow works pretty well for us.</p>
+<p>Over time, I found my own reasons for using RubyMine (or really, any other IDE with advanced SQL support):</p>
 <ul>
 <li>easy to kill queries</li>
-<li>syntax highlighting for SQL (when used with <code>DBI::dbGetQuery()</code> or similar functions) – this means that the SQL code is colored to highlight keywords, etc.</li>
+<li>syntax highlighting (code coloring) for SQL</li>
 <li>auto-completion for SQL</li>
 <li>auto-formatting for SQL (cmd + option + l is my favorite shortcut ever in RubyMine)</li>
 <li>helpful hints/errors when something’s wrong with my query</li>
 </ul>
 <p><img src="/post/2020-04-29-using-sql-in-rstudio_files/sql-autoformat.gif" /></p>
-<p>I don’t think RStudio has enough SQL features for me to fully move over that part of my flow, but it has many more features than I’d realized.</p>
+<p>I’m glad I was forced to venture out of my RStudio comfort zone, but I’ve begun to discover that some of the features I love about RubyMine actually exist in RStudio as well.</p>
 </div>
 <div id="previewing-sql-in-rstudio" class="section level2">
 <h2>Previewing SQL in RStudio</h2>
-<p>Up to now, I was only familiar with dataframe-style previews of query results. Such as in the example below:</p>
+<p>Up to now, I’d only used dataframe-style previews of query results, such as in the example below:</p>
 <pre class="r"><code>library(dplyr)
 library(dbplyr)
 
@@ -62,16 +63,16 @@ copy_to(conn,
         storms,     # this is a dataset built into dplyr
         overwrite = TRUE)
 tbl(conn, sql(&quot;SELECT * FROM storms LIMIT 5&quot;))</code></pre>
-<pre><code>## # Source:   SQL [?? x 13]
-## # Database: sqlite 3.30.1 [:memory:]
-##   name   year month   day  hour   lat  long status category  wind pressure
-##   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    &lt;int&gt;    &lt;int&gt;
-## 1 Amy    1975     6    27     0  27.5 -79   tropi… -1          25     1013
-## 2 Amy    1975     6    27     6  28.5 -79   tropi… -1          25     1013
-## 3 Amy    1975     6    27    12  29.5 -79   tropi… -1          25     1013
-## 4 Amy    1975     6    27    18  30.5 -79   tropi… -1          25     1013
-## 5 Amy    1975     6    28     0  31.5 -78.8 tropi… -1          25     1012
-## # … with 2 more variables: ts_diameter &lt;dbl&gt;, hu_diameter &lt;dbl&gt;</code></pre>
+<pre><code># Source:   SQL [?? x 13]
+# Database: sqlite 3.30.1 [:memory:]
+  name   year month   day  hour   lat  long status category  wind pressure
+  &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    &lt;int&gt;    &lt;int&gt;
+1 Amy    1975     6    27     0  27.5 -79   tropi… -1          25     1013
+2 Amy    1975     6    27     6  28.5 -79   tropi… -1          25     1013
+3 Amy    1975     6    27    12  29.5 -79   tropi… -1          25     1013
+4 Amy    1975     6    27    18  30.5 -79   tropi… -1          25     1013
+5 Amy    1975     6    28     0  31.5 -78.8 tropi… -1          25     1012
+# … with 2 more variables: ts_diameter &lt;dbl&gt;, hu_diameter &lt;dbl&gt;</code></pre>
 <p>It turns out that within RStudio, there are actually (at least) two other methods of previewing SQL queries. (Thank you to RStudio Community posts such as <a href="https://community.rstudio.com/t/rmd-file-with-embedded-sql-chunk-possible-to-move-the-sql-to-external-file-then-source/49651">this one</a> for enlightening me.) These two methods also have the added benefit of SQL code with syntax highlighting.</p>
 <div id="preview-a-.sql-file" class="section level3">
 <h3>1. Preview a <code>.sql</code> file</h3>
@@ -79,15 +80,21 @@ tbl(conn, sql(&quot;SELECT * FROM storms LIMIT 5&quot;))</code></pre>
 <pre class="sql"><code>-- !preview conn=DBI::dbConnect(RSQLite::SQLite())
 
 SELECT 1</code></pre>
-<p>I always blindly deleted the header, but it turns out that this header allows me to preview queries in RStudio! If you supply it with a working database connection (no spaces around the <code>=</code>!) and click the <strong>Preview</strong> button, a <strong>SQL Results</strong> tab pops up next to the Console with the query results.</p>
+<p>I’d always blindly deleted the header, but it turns out that all this time, RStudio had been trying to tell me that I can actually preview queries <em>in</em> RStudio! If you supply it with a working database connection (no spaces around the <code>=</code>!) and click the <strong>Preview</strong> button, a <strong>SQL Results</strong> tab pops up next to the Console with the query results.</p>
 <p><img src="/post/2020-04-29-using-sql-in-rstudio_files/sql-file-preview.png" /></p>
-<p>Note that unlike in the <code>tbl()</code> example above, you have to pull out the connection from the <code>src_memdb()</code> using <code>$con</code>. This seems to be a special case; other connections seem to work without extra fussing.</p>
+<p>If you’ve run the previous dplyr/dbplyr code chunk in the same session, you’ll have both the connection and the data you need to test out this preview function yourself! Just create a <code>.sql</code> file with the following code:</p>
+<pre class="sql"><code>-- !preview conn=src_memdb()$con
+
+SELECT * FROM storms LIMIT 5
+</code></pre>
+<p>Note that unlike in the <code>tbl()</code> example above, you have to pull out the connection from the <code>src_memdb()</code> using <code>$con</code>. This seems to be a special case; other connections seem to work without extra fussing. For the rest of this post, I’ll refer to this connection as <code>con</code> with one “n” (with the exception of the gif below, where I gave it the lengthier name <code>conn_isolated</code>).</p>
+<pre class="r"><code>con &lt;- src_memdb()$con</code></pre>
 </div>
 <div id="sql-chunks-in-rmarkdown" class="section level3">
 <h3>2. SQL chunks in RMarkdown</h3>
-<p>I generally prefer to show RMarkdown output <strong>in the console</strong> <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> (and it looks like <a href="https://twitter.com/earowang/status/1123512515088879616">I’m not the only one</a>.) This means that when I run code in an <code>.Rmd</code> file, it feels more or less the same as when I run an <code>.R</code> file: the plots show up in the plots pane, code is run in the console, and so on.</p>
-<p>While you can use SQL chunks with this setting, <strong>there is NO chunk preview option</strong>. You must trust your queries and <strong>knit</strong> the file to make sure. You get the syntax highlighting razzle-dazzle but alas– no preview.</p>
-<p>It is in this very specific case where <strong>inline mode</strong> wins. SQL preview magically becomes an option and you get to interact with your beautifully colored SQL code.</p>
+<p>I generally prefer to show RMarkdown output <strong>in the console</strong> <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> (and it looks like <a href="https://twitter.com/earowang/status/1123512515088879616">I’m not the only one</a>). This means that when I run code in an <code>.Rmd</code> file, it feels more or less the same as when I run an <code>.R</code> file: the plots show up in the plots pane, code is run in the console, and so on.</p>
+<p>While you can use SQL chunks with this setting, <strong>there is NO chunk preview option</strong>. You must trust your queries and <strong>knit</strong> the file to make sure everything runs. You get the syntax highlighting razzle-dazzle but alas– no preview.</p>
+<p>It is in this very specific case where <strong>inline mode</strong> wins big time. SQL previews magically become an option, allowing you to interact with your beautifully colored SQL code.</p>
 <p><img src="/post/2020-04-29-using-sql-in-rstudio_files/sql-inline-preview.gif" /></p>
 </div>
 </div>
@@ -97,71 +104,74 @@ SELECT 1</code></pre>
 <div id="sql-output-as-a-variable" class="section level3">
 <h3>SQL output as a variable</h3>
 <p>When using SQL chunks, you can specify an output variable using the <code>output.var</code> chunk option with the variable name as a string. <a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
-<p>In inline mode, the preview will no longer appear when running the SQL chunk, but the variable will appear in your environment like any normal variable. This is the same behavior as a regular variable assignment in R (<code>storm_preview &lt;- blah</code>).</p>
-<pre class="markdown"><code>```{sql connection=conn_isolated, output.var=&quot;storm_preview&quot;}
+<p>In inline mode, the preview will no longer appear when running the SQL chunk, but the variable will appear in your environment. Think of it like a regular variable assignment in R, where no output is printed when a variable is assigned (<code>storm_preview &lt;- &quot;blah&quot;</code>).<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a></p>
+<pre class="markdown"><code>```{sql connection=con, output.var=&quot;storm_preview&quot;}
 SELECT * FROM storms LIMIT 5;
 ```</code></pre>
-<pre class="markdown"><code>```{r}
+<pre><code>```{r}
 storm_preview
 ```</code></pre>
-<div id="providing-query-parameters" class="section level4">
-<h4>Providing query parameters</h4>
-<p>Adding a single variable is quite simple. Add <code>?</code> before the variable in the SQL chunk and just make sure that the R variable has the same name.</p>
-<pre class="markdown"><code>```{r}
+</div>
+<div id="providing-query-parameters" class="section level3">
+<h3>Providing query parameters</h3>
+<p><strong>Adding a single variable</strong> is quite simple. Add <code>?</code> before the variable in the SQL chunk and just make sure that the R variable has the same name.</p>
+<pre><code>```{r}
 storm_status &lt;- &quot;hurricane&quot;
 ```</code></pre>
-<pre class="markdown"><code>```{sql connection=conn_isolated}
+<pre class="markdown"><code>```{sql connection=con}
 SELECT * FROM storms WHERE status = ?storm_status LIMIT 5;
 ```</code></pre>
-<p>Sometimes, you cannot simply pass in a parameter. The <code>glue_sql()</code> function is great at managing some of the magic for you. To pass in a column name as a parameter, for example, you can just wrap the string in <code>glue_sql()</code>.</p>
-<pre class="markdown"><code>```{r}
+<p>Sometimes, you cannot simply pass in a parameter. The <code>glue_sql()</code> function is great at managing some of the magic for you. To pass in a column name as a parameter, for example, you can just wrap the string in <code>glue_sql()</code> and it just works.</p>
+<pre><code>```{r}
 col_name &lt;- glue::glue_sql(&quot;status&quot;)
 ```</code></pre>
-<pre class="markdown"><code>```{sql connection=conn_isolated}
+<pre class="markdown"><code>```{sql connection=con}
 SELECT * FROM storms WHERE ?col_name = &#39;hurricane&#39; LIMIT 5;
 ```</code></pre>
-<p><strong>Note:</strong> Generally, you will also need to specify the <code>.con</code> (connection) so that <code>glue</code> will know what type of SQL syntax you need.</p>
-<p>Now, what if you want to <a href="https://community.rstudio.com/t/using-multiple-r-variables-in-sql-chunk/2940/13">provide multiple parameters</a>? Adding an <code>*</code> to the end of the variable collapses the vector into a single comma-separated expression, rather than outputting a vector of SQL expressions.</p>
+<p><em>Note:</em> Generally, you will also need to specify the <code>.con</code> (connection) so that <code>glue</code> will know what type of SQL syntax you need.</p>
+<p>Now, what if you want to <strong><a href="https://community.rstudio.com/t/using-multiple-r-variables-in-sql-chunk/2940/13">provide multiple parameters</a></strong>? Adding an <code>*</code> to the end of the variable collapses the vector into a single comma-separated expression, rather than outputting a vector of SQL expressions. This behavior is somewhat reminiscent of <code>args</code> and <code>kwargs</code> in Python, which uses <code>*</code> as an unpacking operator.</p>
 <pre class="r"><code>types &lt;- c(&quot;hurricane&quot;, &quot;tropical depression&quot;)
-glue::glue_sql(&quot;{types}&quot;, .con = conn_isolated)</code></pre>
-<pre><code>## &lt;SQL&gt; &#39;hurricane&#39;
-## &lt;SQL&gt; &#39;tropical depression&#39;</code></pre>
-<pre class="r"><code>glue::glue_sql(&quot;{types*}&quot;, .con = conn_isolated)</code></pre>
-<pre><code>## &lt;SQL&gt; &#39;hurricane&#39;, &#39;tropical depression&#39;</code></pre>
-<p>It is somewhat reminiscent of <code>args</code> and <code>kwargs</code> in Python, which uses <code>*</code> as an unpacking operator.</p>
-<p>Of course, to pass these parameters to our SQL chunk, we need to make sure we have the appropriate parentheses for the <code>IN</code> to run.</p>
-<pre class="markdown"><code>```{r}
+
+# without an asterisk
+glue::glue_sql(&quot;{types}&quot;, .con = con)</code></pre>
+<pre><code>&lt;SQL&gt; &#39;hurricane&#39;
+&lt;SQL&gt; &#39;tropical depression&#39;</code></pre>
+<pre class="r"><code># with an asterisk
+glue::glue_sql(&quot;{types*}&quot;, .con = con)</code></pre>
+<pre><code>&lt;SQL&gt; &#39;hurricane&#39;, &#39;tropical depression&#39;</code></pre>
+<p>Of course, to pass these parameters to our SQL chunk, we need to make sure we have the appropriate parentheses around <code>?storm_status</code> for the <code>IN</code> to run.</p>
+<pre><code>```{r}
 types &lt;- c(&quot;hurricane&quot;, &quot;tropical depression&quot;)
-storm_status &lt;- glue::glue_sql(&quot;{types*}&quot;, .con = conn_isolated)
+storm_status &lt;- glue::glue_sql(&quot;{types*}&quot;, .con = con)
 ```</code></pre>
-<pre class="markdown"><code>```{sql connection=conn_isolated}
+<pre class="markdown"><code>```{sql connection=con}
 SELECT * FROM storms WHERE status IN (?storm_status) LIMIT 5;
 ```</code></pre>
-</div>
 </div>
 </div>
 <div id="sql-files-meet-chunks" class="section level2">
 <h2>SQL files meet chunks</h2>
 <p>What if you have a gigantic SQL query that you want to store in a separate file but you <em>also</em> want to use chunks?</p>
-<p>I had no idea that chunks had a <code>code</code> parameter until I came across Christophe Dervieux’s comments in <a href="https://community.rstudio.com/t/rmd-file-with-embedded-sql-chunk-possible-to-move-the-sql-to-external-file-then-source/49651/15">this RStudio Community discussion</a>. You can use it read in a SQL file with your query, parameters and all.</p>
-<pre class="markdown"><code>```{sql connection=conn_isolated, code=readLines(&quot;storm_preview.sql&quot;), output.var=&quot;storm_preview&quot;}
+<p>I had no idea that chunks had a <code>code</code> parameter until I came across Christophe Dervieux’s comments in <a href="https://community.rstudio.com/t/rmd-file-with-embedded-sql-chunk-possible-to-move-the-sql-to-external-file-then-source/49651">this RStudio Community discussion</a>. You can use it read in a SQL file with your query, parameters and all.</p>
+<pre class="markdown"><code>```{sql connection=con, code=readLines(&quot;storm.sql&quot;), output.var=&quot;storm_preview&quot;}
 ```</code></pre>
-<pre class="markdown"><code>```{r}
+<pre><code>```{r}
 storm_preview
 ```</code></pre>
 <p>When you knit the file, the imported SQL (and its comments) is included in the output by default.</p>
 <p><img src="/post/2020-04-29-using-sql-in-rstudio_files/sql-readlines.png" /></p>
 </div>
-<div id="r-sql" class="section level2">
-<h2>R &amp; SQL</h2>
-<p>At the end of the day, both R and SQL are–and will remain–big parts of my analysis flow, so it’s these little tricks that make it just that much easier to integrate both smoothly into a single analysis.</p>
+<div id="r-sql-working-hand-in-hand" class="section level2">
+<h2>R &amp; SQL – working hand-in-hand</h2>
+<p>At the end of the day, both R and SQL are–and will remain–big parts of my analysis flow, so it’s these little tricks that help to smooth out the little points of friction on the way. If you have more tricks to share with me, leave a comment or ping me [on Twitter](!</p>
 <p><img src="/post/2020-04-29-using-sql-in-rstudio_files/sql-r-friends.png" /></p>
 <p>Creds to <a href="https://twitter.com/allison_horst/status/1238612497344552960">Allison Horst</a> for the fun arms &amp; faces!</p>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p><code>Global Options</code> –&gt; <code>R Markdown</code> –&gt; <em>uncheck</em> <code>Show output inline for all R Markdown documents</code><a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn1"><p>For “console mode” Rmd’s: <code>Global Options</code> –&gt; <code>R Markdown</code> –&gt; <em>uncheck</em> <code>Show output inline for all R Markdown documents</code><a href="#fnref1" class="footnote-back">↩</a></p></li>
 <li id="fn2"><p>There are a few additional chunk option examples in the <a href="https://bookdown.org/yihui/rmarkdown/language-engines.html#sql">SQL language engine</a> section of <em>R Markdown: The Definitive Guide</em><a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>For all my enthusiasm for syntax highlighting, I admit I do not understand how to do it properly when quoting RMarkdown chunks, though this <a href="https://support.rstudio.com/hc/en-us/articles/360018181633-Including-verbatim-R-code-chunks-inside-R-Markdown">RStudio blogpost</a> gave me some clues. For more details on how to use syntax highlighting with blogdown, I recommend posts by <a href="https://support.rstudio.com/hc/en-us/articles/360018181633-Including-verbatim-R-code-chunks-inside-R-Markdown">Amber Thomas</a> and <a href="https://ropensci.org/technotes/2020/04/30/code-highlighting/">Maëlle Salmon</a><a href="#fnref3" class="footnote-back">↩</a></p></li>
 </ol>
 </div>
