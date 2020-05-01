@@ -13,7 +13,7 @@ output:
     toc_depth: 3
 ---
 
-In the last year, SQL has wound its way deeper and deeper into my R workflow. I switch between the two every day, but up to now, I've been slow diving into the SQL tools RStudio provides. This post documents the little tricks I've gathered scouring RStudio Community posts, [blogposts](https://blog.rstudio.com/2018/10/02/rstudio-1-2-preview-sql/), and other resources for help upgrading my R-SQL workflow.
+In the last year, SQL has wound its way deeper and deeper into my R workflow. I switch between the two every day, but up to now, I've been slow diving into the SQL tools RStudio provides. This post documents the little tricks I've gathered scouring RStudio Community posts, [blogposts](https://blog.rstudio.com/2018/10/02/rstudio-1-2-preview-sql/), and other resources for help upgrading my R-SQL workflow. To see just the code, take a look at the [associated GitHub gist](https://gist.github.com/isteves/aaf339505c82762e8747faa3efb29c89).
 
 ```{r include = FALSE}
 library(knitr)
