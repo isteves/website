@@ -5,7 +5,7 @@ date: '2020-04-29'
 slug: using-sql-in-rstudio
 categories: []
 tags: []
-cover: /cover-sql-r-friends.png
+cover: /post/2020-04-29-using-sql-in-rstudio_files/cover-sql-r-friends.png
 draft: false
 output:
   blogdown::html_page:
@@ -209,7 +209,7 @@ When you knit the file, the imported SQL (and its comments) is included in the o
 
 ## R & SQL -- working hand-in-hand
 
-At the end of the day, both R and SQL are--and will remain--big parts of my analysis flow, so it's these little tricks that help to smooth out the little points of friction on the way. If you have more tricks to share with me, leave a comment or ping me [on Twitter](!
+At the end of the day, both R and SQL are--and will remain--big parts of my analysis flow, so it's these little tricks that help to smooth out the little points of friction on the way. If you have more tricks to share with me, leave a comment or ping me [on Twitter](https://twitter.com/i_steves)!
 
 ![](/post/2020-04-29-using-sql-in-rstudio_files/sql-r-friends.png)
 
