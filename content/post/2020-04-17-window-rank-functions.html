@@ -306,7 +306,7 @@ cheetah
 <li>each step of <code>cume_dist()</code> is 1 / # scores (1/10 = 0.1 in this case) and is similar to <code>min_rank()</code> except that all ties get the <em>maximum</em> score</li>
 </ul>
 <p>To dig into it even more, here’s another way of visualizing the ranks. Since ranks are only dependent on the <em>order</em> of values and not the value itself (except with repeats), I’ve used row number for the x-axis and added it as a light gray background as well.</p>
-<p>We see that with the exception of <code>ntile</code>, all ranking functions group repeated numbers together (I colored the <span style="color:#81d5a6;font-weight:bold">two 6’s in seagreen</span> and the <span style="color:#ff8c69;font-weight:bold">three 40’s in salmon</span>).</p>
+<p>We see that with the exception of <code>ntile</code>, all ranking functions group repeated numbers together (I colored the <span style="color:#0095A8;font-weight:bold">two 6’s in teal</span> and the <span style="color:#FF7043;font-weight:bold">three 40’s in orange</span>).</p>
 <p><img src="/post/2020-04-17-window-rank-functions_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
 <p>Since <code>percent_rank()</code> and <code>cume_dist()</code> reach a maximum of 1, I decided to plot them separately. The light gray background indicates equal increments of 0.1 across all 10 values.</p>
 <p><img src="/post/2020-04-17-window-rank-functions_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>

@@ -65,9 +65,12 @@ From the patterns above we see that:
 
 To dig into it even more, here's another way of visualizing the ranks. Since ranks are only dependent on the _order_ of values and not the value itself (except with repeats), I've used row number for the x-axis and added it as a light gray background as well. 
 
-We see that with the exception of `ntile`, all ranking functions group repeated numbers together (I colored the <span style = 'color:#81d5a6;font-weight:bold'>two 6's in seagreen</span> and the <span style = 'color:#ff8c69;font-weight:bold'>three 40's in salmon</span>). 
+We see that with the exception of `ntile`, all ranking functions group repeated numbers together (I colored the <span style = 'color:#0095A8;font-weight:bold'>two 6's in teal</span> and the <span style = 'color:#FF7043;font-weight:bold'>three 40's in orange</span>). 
 
 ```{r echo = FALSE}
+teal <- "#0095A8"
+orange <- "#FF7043"
+
 window_rank_example %>% 
     mutate(row = factor(row_number())) %>% 
     gather(type, value, -team, -score, -row) %>% 
@@ -83,8 +86,8 @@ window_rank_example %>%
     geom_col(size = 5) +
     facet_grid(~ type) +
     scale_y_continuous(n.breaks = 10, expand = c(0, 0)) +
-    scale_fill_manual(values = c("six" = "#81d5a6", 
-                                 "forty" = "#ff8c69",
+    scale_fill_manual(values = c("six" = teal, 
+                                 "forty" = orange,
                                  "other" = "grey60")) +
     guides(fill = FALSE) 
 ```
@@ -107,8 +110,8 @@ window_rank_example %>%
     geom_col(size = 5) +
     facet_grid(~ type) +
     scale_y_continuous(n.breaks = 10, expand = c(0, 0)) +
-    scale_fill_manual(values = c("six" = "#81d5a6", 
-                                 "forty" = "#ff8c69",
+    scale_fill_manual(values = c("six" = teal, 
+                                 "forty" = orange,
                                  "other" = "grey60")) +
     guides(fill = FALSE) 
 ```
