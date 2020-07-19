@@ -1,0 +1,124 @@
+---
+title: Journey through DB Connect installation hell
+author: 'Irene Steves'
+date: '2020-07-19'
+slug: db-connect-install
+categories: []
+tags: []
+output:
+  blogdown::html_page:
+    toc: true
+    toc_depth: 3
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#step-0-install-java-8">Step 0: install Java 8</a></li>
+<li><a href="#step-1-install-the-client">Step 1: Install the client</a></li>
+<li><a href="#step-2-configure-connection-properties">Step 2: Configure connection properties</a></li>
+<li><a href="#step-3-set-up-in-r">Step 3: set up in R</a></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+</div>
+
+<p>Using Databricks notebooks on their platform is not so bad, but once you want to access the super power of Spark from your local RStudio, you’ve got to prepare yoruself for some installation hell. This post augments the <a href="https://docs.databricks.com/dev-tools/databricks-connect.html">Databricks official documentation</a> and spells out the steps that tripped me up.</p>
+<div id="requirements" class="section level2">
+<h2>Requirements</h2>
+<p>Why is this so painful? Because you have to carefully check that you have the <strong>correct versions</strong> of <em>each</em> of the following programs:</p>
+<ul>
+<li>Databricks</li>
+<li>Spark</li>
+<li>Scala</li>
+<li>Python 3.5+ (needs to match cluster) – I checked that I had 3.7 using <code>which -a python3.7</code> in the terminal (more details for Mac <a href="https://stackoverflow.com/questions/33175827/what-version-of-python-is-on-my-mac">here</a>)</li>
+<li>Java 8!!</li>
+</ul>
+<p>The versions need to match your cluster set-up, and they also need to match each other. Read the <a href="https://docs.databricks.com/dev-tools/databricks-connect.html#requirements">requirements</a> section very carefully.</p>
+<p>You can check your cluster configurations on Databricks by clicking Clusters –&gt; Accessible by me –&gt; Name of the cluster (or + Create cluster).</p>
+<p>Occasionally there is a message that you should set your cluster configurations to <code>spark.databricks.service.server.enabled true</code>. Since I used a newer Databricks version, I don’t think it was necessary but it didn’t hurt. I set it in the cluster’s <code>Advanced Options</code>.</p>
+<p><strong>Disclaimer:</strong> I did all this on a Mac and have no idea if any of this works on Windows.</p>
+</div>
+<div id="step-0-install-java-8" class="section level2">
+<h2>Step 0: install Java 8</h2>
+<p>About a year ago, I gave up partway through a workshop because I couldn’t understand why I had to download Java 8 when I had Java 11. Turns out, there is no escape from this obstacle if you want to use Spark from RStudio (at least with this Spark version).</p>
+<p>To install, follow <a href="https://stackoverflow.com/questions/46513639/how-to-downgrade-java-from-9-to-8-on-a-macos-eclipse-is-not-running-with-java-9">these instructions</a> on StackOverflow or my tweaked version below.</p>
+<ol style="list-style-type: decimal">
+<li>Check to see if you have Java 8 by running <code>/usr/libexec/java_home -V</code> in the terminal. If you have it already, skip to step 4. Note: the version number should read something like 1.8.*</li>
+<li>Download Java 8 from <a href="https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html" class="uri">https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html</a> (I had to register to download)</li>
+<li>Run <code>/usr/libexec/java_home -V</code> in the terminal again to check that the install worked</li>
+<li>Add the <code>JAVA_HOME</code> variable to your bash profile and your .Renviron file. To do so, either run the code below in the terminal OR (if you run into problems…)</li>
+</ol>
+<pre class="sh"><code>echo &quot;export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)&quot; &gt;&gt; $HOME/.bash_profile
+echo &quot;JAVA_HOME=&#39;$(/usr/libexec/java_home -v 1.8)&#39;&quot; &gt;&gt; $HOME/.Renviron</code></pre>
+<p><em>To add manually:</em></p>
+<ul>
+<li>Open your bash profile (<code>open ~/.bash_profile</code> in the terminal) and add <code>export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)</code> on a new line</li>
+<li>Open your .Renviron file (<code>open ~/.Renviron</code>) and add <code>JAVA_HOME='/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home'</code> (replace the path with the output of <code>/usr/libexec/java_home -v 1.8</code> if your path is different)</li>
+</ul>
+</div>
+<div id="step-1-install-the-client" class="section level2">
+<h2>Step 1: Install the client</h2>
+<ol style="list-style-type: decimal">
+<li>If you have it installed already, uninstall PySpark: <code>pip uninstall pyspark</code></li>
+<li>Install the Databricks Connect client: <code>pip install -U databricks-connect==6.4.*</code> (make sure you get your Databricks version right!)</li>
+</ol>
+</div>
+<div id="step-2-configure-connection-properties" class="section level2">
+<h2>Step 2: Configure connection properties</h2>
+<p>You will need the following configuration properties:</p>
+<ul>
+<li>URL: <a href="https://yourgroupname.cloud.databricks.com/" class="uri">https://yourgroupname.cloud.databricks.com/</a></li>
+<li>User token: get your personal access token <a href="https://docs.databricks.com/dev-tools/api/latest/authentication.html#token-management">with these instructions</a></li>
+<li>Cluster ID (see image below from the official docs)</li>
+<li>Org ID: ### (don’t remember how I got this but it was part of the process)</li>
+<li>Port: 15001</li>
+</ul>
+<p><img src="https://docs.databricks.com/_images/cluster-id-aws.png" /></p>
+<ol style="list-style-type: decimal">
+<li>Run <code>databricks-connect configure</code> and follow the instructions, filling in the configuration properties as written above</li>
+<li>Not 100% sure if this is necessary at this stage but eventually you’ll want to set SPARK_HOME in your bash profile &amp; .Renviron files. Use <code>databricks-connect get-spark-home</code> to get the appropriate path.</li>
+</ol>
+<pre class="sh"><code>echo &quot;export SPARK_HOME=&#39;/usr/local/lib/python3.7/site-packages/pyspark&#39;&quot; &gt;&gt; $HOME/.bash_profile
+echo &quot;SPARK_HOME=&#39;/usr/local/lib/python3.7/site-packages/pyspark&#39;&quot; &gt;&gt; $HOME/.Renviron</code></pre>
+<p>(Use the manual method from above if you run into problems.)</p>
+<ol start="3" style="list-style-type: decimal">
+<li>Run <code>databricks-connect test</code> to check that the connection worked – if it worked, you’ll eventually get the message, <code>All tests passed.</code>. <strong>Try restarting your computer &amp; running again if you have problems.</strong> This worked for me! Initially, I got the error message below, but it went away when I tried a week later (probably because I had restarted my computer):</li>
+</ol>
+<blockquote>
+<p>Testing scala command Could not find valid SPARK_HOME while searching [‘/Users/irenesteves’, ‘/usr/local/bin’]</p>
+</blockquote>
+<p><img src="/spark-success.png" /></p>
+</div>
+<div id="step-3-set-up-in-r" class="section level2">
+<h2>Step 3: set up in R</h2>
+<p>There is RStudio set-up information in the Databricks documentation, but I found a bit of extra information in the <a href="https://spark.rstudio.com/examples/databricks-cluster-remote/">RStudio documentation pages</a>.</p>
+<p>To start, you need to install <code>sparklyr</code>:</p>
+<pre class="r"><code># Install sparklyr if you don&#39;t already have it
+# install.packages(&quot;sparklyr&quot;)
+
+# Check to see if Spark has already been succesfully installed locally
+sparklyr::spark_install_find() 
+
+# If not, install Spark locally
+sparklyr::spark_install()</code></pre>
+<p>If you don’t have the <code>JAVA_HOME</code> and <code>SPARK_HOME</code> variables set in your .Renviron file yet, now is the time to do it (run the echo commands above or manually edit them using <code>usethis::edit_r_environ()</code>). Once they’re set, you should be able to run the following anytime to get connected in R:</p>
+<pre class="r"><code>library(tidyverse)
+library(sparklyr)
+library(dbplyr)
+
+sc &lt;- spark_connect(method = &quot;databricks&quot;)</code></pre>
+<p>You should be able to see all the Databricks tables in the Connections pane:</p>
+<p><img src="/connections-pane.png" /></p>
+<p>To see if you can actually work with the tables, test one out:</p>
+<pre class="r"><code>fi &lt;- tbl(sc, &quot;fireincidents&quot;) 
+# run `fi` to preview the &quot;lazy&quot; table
+
+fi %&gt;% count(`Ignition Cause`)
+# you can use `collect()` to bring the data into R -- it can be heavy!</code></pre>
+<p>When you finish using your connection, simply disconnect with <code>spark_disconnect(sc)</code>.</p>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>It’s a long and arduous process that requires lots of googling and stack-overflowing, but hopefully this post saved you a bit of time and pain.</p>
+</div>
