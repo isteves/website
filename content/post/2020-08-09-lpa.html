@@ -1,0 +1,239 @@
+---
+title: The nitty-gritty of the Label Propagation Algorithm
+author: Irene Steves
+date: '2020-08-09'
+slug: lpa
+cover: /lpa.gif
+---
+
+
+
+<p>Sometimes to learn something, you just have to implement it yourself. In this post, I try my hand at approximating the Label Propagation Algorithm (LPA) proposed by Raghavan et al. in their paper, <a href="https://journals.aps.org/pre/pdf/10.1103/PhysRevE.76.036106">Near linear time algorithm to detect community structures in large-scale networks</a>. It’s a fairly common (fast!) community detection algorithm that is implemented in <a href="https://igraph.org/r/doc/cluster_label_prop.html"><code>igraph</code></a> (C-based network analysis library with interfaces in R, Python, and Mathematica), <a href="https://graphframes.github.io/graphframes/docs/_site/user-guide.html#label-propagation-algorithm-lpa"><code>GraphFrames</code></a> (built on Spark, with APIs in Scala, Java, and Python–plus an <a href="https://spark.rstudio.com/graphframes/">R API</a> created by RStudio), and in other places. There are also a few other “flavors” of label propagation implemented elsewhere. The free <a href="https://neo4j.com/lp/book-graph-algorithms/">Graph Algorithms</a> book has one of my favorite explanations of label propagation so far.</p>
+<p>In this post, I’m not trying to optimize the implementation, so I freely mix functions from the following packages:</p>
+<pre class="r"><code>library(tidyverse)
+
+library(igraph) 
+# many graph packages in R rely on igraph for computation
+# lots of great functionality, sometimes confusing bc it&#39;s object-oriented 
+# (it goes against my functional programming instincts)
+
+# these packages marry graph data &amp; tidyverse syntax
+library(tidygraph)
+library(ggraph)</code></pre>
+<p>I’ll use the <code>highschool</code> dataset that comes with the <code>ggraph</code> package. It’s data of friendships among high school boys, and looks like this:</p>
+<pre class="r"><code>head(highschool)</code></pre>
+<pre><code>##   from to year
+## 1    1 14 1957
+## 2    1 15 1957
+## 3    1 21 1957
+## 4    1 54 1957
+## 5    1 55 1957
+## 6    2 21 1957</code></pre>
+<p>For this post, I’ll take the data from just one year (there are two years of data) and consider the relationships to be mutual (undirected).</p>
+<pre class="r"><code>hs &lt;- filter(highschool, year == 1957)</code></pre>
+<div id="the-endpoint" class="section level2">
+<h2>The endpoint</h2>
+<p>If I were to use label propagation normally, I’d use the following (fairly short) piece of code:</p>
+<pre class="r"><code># igraph
+g &lt;- graph_from_data_frame(hs, directed = FALSE)
+cluster_lpa &lt;- cluster_label_prop(g)
+cluster_lpa</code></pre>
+<pre><code>## IGRAPH clustering label propagation, groups: 10, mod: 0.68
+## + groups:
+##   $`1`
+##    [1] &quot;1&quot;  &quot;2&quot;  &quot;3&quot;  &quot;6&quot;  &quot;9&quot;  &quot;12&quot; &quot;13&quot; &quot;14&quot; &quot;15&quot; &quot;20&quot; &quot;21&quot; &quot;22&quot; &quot;24&quot; &quot;29&quot;
+##   [15] &quot;38&quot; &quot;51&quot;
+##   
+##   $`2`
+##   [1] &quot;4&quot;  &quot;5&quot;  &quot;16&quot; &quot;18&quot; &quot;19&quot;
+##   
+##   $`3`
+##   [1] &quot;7&quot;  &quot;8&quot;  &quot;17&quot;
+##   
+##   + ... omitted several groups/vertices</code></pre>
+<pre class="r"><code>plot(cluster_lpa, g)</code></pre>
+<p><img src="/post/2020-08-09-lpa_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>The “tidy” syntax is a bit more verbose, but if you already know ggplot/dplyr, it’s easy to know where to jump in to start tweaking.</p>
+<pre class="r"><code># tidygraph / ggraph
+g_tidy &lt;- as_tbl_graph(hs) 
+
+cluster_tidy_lpa &lt;- g_tidy %&gt;% 
+    activate(nodes) %&gt;% 
+    mutate(group = group_label_prop()) 
+
+ggraph(cluster_tidy_lpa) +
+    geom_edge_link(color = &quot;grey70&quot;) + #default is black
+    geom_node_point(aes(color = as.factor(group)), size = 10) + #default is fairly small
+    geom_node_text(aes(label = name)) +
+    theme_void() +
+    guides(color = FALSE, fill = FALSE) </code></pre>
+<p><img src="/post/2020-08-09-lpa_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>For the rest of the plots, I’ll use the same layout and tweaked ggraph settings to make it easier to visually compare the results.</p>
+<pre class="r"><code># this special layout object includes coordinates for each node
+starting_layout &lt;- create_layout(cluster_tidy_lpa, 
+                                 layout = &#39;igraph&#39;, algorithm = &#39;kk&#39;)
+
+create_ggraph &lt;- function(graph_layout, node_color, label) {
+    ggplot(graph_layout) +
+        geom_edge_link(color = &quot;grey70&quot;) +
+        geom_node_point(aes(color = {{node_color}}), size = 10) +
+        geom_node_text(aes(label = name)) +
+        theme_void() +
+        guides(color = FALSE) +
+        scale_color_manual(values = scales::hue_pal()(15))
+}
+
+# once we have our group results, graph them all using the same layout
+graph_cluster &lt;- function(group_results, starting_layout) {
+    layout_w_groups &lt;- starting_layout %&gt;%  
+        left_join(rename(group_results, new = group), by = &quot;name&quot;) %&gt;% 
+        mutate(name = fct_relevel(name, &quot;22&quot;, &quot;66&quot;, &quot;36&quot;, &quot;50&quot;, &quot;45&quot;),
+               # use a few vertices to &quot;anchor&quot; the colors of certain groups
+               name_int = as.integer(name)) %&gt;% 
+        mutate(new = fct_reorder(new, name_int, .fun = min))
+    
+    n_groups &lt;- n_distinct(layout_w_groups$new)
+    create_ggraph(layout_w_groups, node_color = new, label = name) +
+        ggtitle(paste(n_groups, &quot;clusters&quot;))
+}</code></pre>
+</div>
+<div id="the-algorithm" class="section level2">
+<h2>The algorithm</h2>
+<p>Here, I’m aiming for the spirit of label propagation. For the specific details, go chase down some <a href="https://journals.aps.org/pre/pdf/10.1103/PhysRevE.76.036106">papers</a>. These are my steps:</p>
+<ol style="list-style-type: decimal">
+<li><em>Starting state.</em> The label propagation algorithm usually starts with a small set of labelled nodes. In our case, we’ll start without providing labels. Instead, each node will begin in a group of its own.<br />
+</li>
+<li>For each node, look at the groups of its neighbors. The most common group in the neighborhood (node + neighbors) becomes the node’s new group. In the case of a tie, sample randomly from the tied groups. This should result in a new group for each node. Normally nodes are randomly ordered and replaced as you go (“asynchronous”) – in my version, I’ll determine the new groups for all nodes and then replace them all at once (“synchronous”).<br />
+</li>
+<li>Compare new and old groups. If they are <em>not</em> the same, repeat step 2. The new group now becomes the “old”, or starting group, for step 2.</li>
+</ol>
+<p>One important thing to note is that there’s an element of randomness at play, which means that results will differ per run. I didn’t bother to set any seeds here, but if you care about reproducibility, it’s probably a good idea.</p>
+</div>
+<div id="implementation" class="section level2">
+<h2>Implementation</h2>
+<p>I’ll start with a bit of pseudo-code describing the steps above. We’ll rely on the graph data structure to store all our edge/node information, as well as tell us who the neighbors are.</p>
+<pre class="r"><code>edges 
+nodes
+graph &lt;- to_graph(nodes, edges)
+
+# every node starts in its own group
+starting_groups &lt;- nodes %&gt;% mutate(group = 1:length(nodes)) 
+groups_are_same &lt;- FALSE
+
+while(!groups_are_same) {
+    # the map would have to be replaced with a for-loop in the async version
+    new_groups &lt;- map(nodes, ~determine_new_group(.x, starting_groups, graph))
+    groups_are_same &lt;- new_groups == starting_groups
+    starting_groups &lt;- new_groups
+}
+
+new_groups</code></pre>
+<p>The pseudocode doesn’t work yet, but it provides a structure to build off of. Now we just need to flesh out the pieces. We’ll start with some real data. In an effort to keep the code readable, I’m using variable names that are also <code>igraph</code> function names. Not ideal but going forward with it.</p>
+<pre class="r"><code>edges &lt;- hs
+graph &lt;- as_tbl_graph(hs, directed = FALSE) #infers nodes from the edges
+nodes &lt;- graph %&gt;% activate(nodes) %&gt;% as_tibble() #extract dataframe of nodes</code></pre>
+<p>For the algorithm code, I’ve only had to make a few small changes to make it almost work. I’ve wrapped it in a <code>run_lpa()</code> function so we can easily run it multiple times. All we’re missing now is a <code>determine_new_group()</code> function that will return a data frame with new group.</p>
+<pre class="r"><code>run_lpa &lt;- function(nodes, graph) {
+    starting_groups &lt;- nodes %&gt;% mutate(group = row_number())
+    groups_are_same &lt;- FALSE
+    
+    while(!groups_are_same) {
+        new_groups_vec &lt;- map_chr(nodes$name, ~determine_new_group(.x, starting_groups, graph))
+        groups_are_same &lt;- identical(new_groups_vec, starting_groups$group)
+        starting_groups &lt;- starting_groups %&gt;% 
+            mutate(group = new_groups_vec)
+    }
+    
+    starting_groups
+}</code></pre>
+<p>Now let’s get into the the details of determining the new group for each node. I want to do the following:</p>
+<ol style="list-style-type: decimal">
+<li>Find all groups of its neighbors (+ its current group)</li>
+<li>Choose the new group – if there is one most common group, it wins. If there are ties, then randomly sample from the tied groups.</li>
+</ol>
+<p>Here is the coded version:</p>
+<pre class="r"><code># step 1
+get_neighborhood_groups &lt;- function(node, starting_groups, graph) {
+    neighbors &lt;- make_ego_graph(graph, node = node)[[1]] %&gt;% 
+        V() %&gt;% names()
+    
+    starting_groups %&gt;% 
+        filter(name %in% neighbors) %&gt;% 
+        pull(group)
+}
+
+# step 2
+choose_group &lt;- function(group_options) {
+    all_counts &lt;- table(group_options)
+    max_counts &lt;- all_counts[all_counts == max(all_counts)]
+    if(length(max_counts) == 1) return(names(max_counts))
+    names(sample(max_counts, size = 1))
+}
+
+# both steps together
+determine_new_group &lt;- function(node, starting_groups, graph) {
+    neighbor_groups &lt;- get_neighborhood_groups(node, starting_groups, graph)
+    choose_group(neighbor_groups)
+}</code></pre>
+<p>We’re pretty much done. Now to test it out:</p>
+<pre class="r"><code>lpa_output &lt;- map(1:10, ~run_lpa(nodes, graph))
+lpa_graphs &lt;- map(lpa_output, graph_cluster, starting_layout = starting_layout) </code></pre>
+<p><img src="/lpa.gif" /></p>
+</div>
+<div id="graph-comparison" class="section level2">
+<h2>Graph comparison</h2>
+<p>How does my version compare to the <code>igraph</code> implementation? For convenience, we’ll use the tidygraph wrappers for the clustering functions. I’ll use the normalized mutual information metric (“nmi”) to <code>igraph::compare()</code> my 10 runs to the igraph LPA results I’ll also compare the runs to the edge betweenness and Louvain clustering results to get a better sense of how close I am.</p>
+<pre class="r"><code>lpa_nodes &lt;- graph %&gt;% 
+    mutate(lpa = group_label_prop(),
+           eb = group_edge_betweenness(),
+           louvain = group_louvain()) %&gt;% 
+    as_tibble()
+
+compare_nmi &lt;- partial(compare, method = &quot;nmi&quot;)
+# new version of the function with the `method = &quot;nmi&quot;` saved
+
+map(lpa_output, 
+    ~tibble(lpa = compare_nmi(.x$group, lpa_nodes$lpa),
+            eb = compare_nmi(.x$group, lpa_nodes$eb),
+            louvain = compare_nmi(.x$group, lpa_nodes$louvain))) %&gt;% 
+    bind_rows(.id = &quot;run&quot;)</code></pre>
+<pre><code>## # A tibble: 10 x 4
+##    run     lpa    eb louvain
+##    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+##  1 1     0.852 0.802   0.815
+##  2 2     0.844 0.834   0.772
+##  3 3     0.872 0.881   0.795
+##  4 4     0.930 0.869   0.864
+##  5 5     0.877 0.848   0.784
+##  6 6     0.832 0.839   0.732
+##  7 7     0.816 0.764   0.744
+##  8 8     0.898 0.910   0.792
+##  9 9     0.885 0.879   0.767
+## 10 10    0.850 0.781   0.822</code></pre>
+<p>The normalized mutual information metric ranges from 0 to 1, where 1 means the communities are identical. My implementation is definitely closest to the LPA algorithm.</p>
+<p>What if we just run LPA 10 times and compare it to the results of the three clustering algorithms above?</p>
+<pre class="r"><code>lpa_runs &lt;- map(1:10, 
+                ~graph %&gt;% 
+                    mutate(group = group_label_prop()) %&gt;% 
+                    as_tibble())
+
+map(lpa_runs, 
+    ~tibble(lpa = compare_nmi(.x$group, lpa_nodes$lpa),
+            eb = compare_nmi(.x$group, lpa_nodes$eb),
+            louvain = compare_nmi(.x$group, lpa_nodes$louvain))) %&gt;% 
+    bind_rows(.id = &quot;run&quot;)</code></pre>
+<pre><code>## # A tibble: 10 x 4
+##    run     lpa    eb louvain
+##    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+##  1 1     0.950 0.907   0.858
+##  2 2     0.971 0.969   0.920
+##  3 3     0.981 0.939   0.891
+##  4 4     0.982 0.921   0.872
+##  5 5     0.964 0.921   0.872
+##  6 6     0.981 0.939   0.891
+##  7 7     0.982 0.921   0.872
+##  8 8     0.983 0.922   0.873
+##  9 9     0.965 0.904   0.854
+## 10 10    0.952 0.949   0.836</code></pre>
+<p>The scores jumped up a bit – it’s possible my choice to update nodes synchronously rather than asynchronously is the cause of this difference. In any case, the point of this exercise was to dig deeper into the algorithm, rather than match the implementation exactly. And I can confidently say that my goal has been accomplished!</p>
+</div>
